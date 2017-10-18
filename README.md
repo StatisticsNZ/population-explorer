@@ -1,4 +1,4 @@
-# repository_template
+# population-explorer
 
 Description of repository contents 
 
