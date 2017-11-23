@@ -10,7 +10,7 @@ This repository hosts a public version of the source code for the *Population Ex
 
 The Population Explorer is the main deliverable under the *Information layers and confidentialisation solution* part of the work programme.  Development work began in September 2017 and a releasable product is scheduled to be available (although not necessarily deployed) by December 2017.
 
-It is assumed that the audience has some familiarity with what the IDI is, the careful security measures based on the “Five Safes” that control access, and how researchers use the Data Lab to analyse the IDI.
+It is assumed that if you reading this, you have some familiarity with what the [Integrated Data Infrastructure](http://m.stats.govt.nz/browse_for_stats/snapshots-of-nz/integrated-data-infrastructure.aspx) is, the careful security measures based on the “Five Safes” that control access, and how researchers use the Data Lab to analyse the IDI.
 
 ### The Population Explorer is about improving usability of the IDI
 
@@ -20,7 +20,7 @@ Most of the data in the IDI is in the form of events (such as “person X purcha
 
 The fundamental idea of the Population Explorer is to perform this "roll up" for around 20 to 50 variables, at annual and (if possible) quarterly intervals, so researchers who are already in the Data Lab can save many days of work.  This version of the data, which we describe as the Population Explorer Datamart, will be available as one or more schemas on the database server in the Data Lab.   This datamart would be available to IDI researchers in the Data Lab; exactly under what process and conditions is being worked through.
 
-The Datamart is being built with a "dimensionally modelled" data model along the lines proposed by Ralph Kimball and now standard in the presentation layer of data warehouses around the world.
+The Datamart is being built with a "dimensionally modelled" data model along the lines developed by Ralph Kimball and now standard in the presentation layer of data warehouses around the world.
 
 ### The Datamart will enable two other exciting new products
 
@@ -34,7 +34,7 @@ The intent of the synthetic version of the data is for public release.
 
 ### Structure of this repository
 
-This is a work in progress.  Active development is under way.
+This is a work in progress.  Active development is under way.  As the code is released under the usual protocols for release of any material from the Data Lab, the code in the public version of this repository is likely to be at least one to three weeks behind the development version.
 
 Note that none of this code will work for anyone else; even researchers with access to the IDI would not be able to create and run the schemas and stored procedures, for example.  It is published for transparency and to help discussion of the definition of variables.
 
@@ -42,8 +42,6 @@ Note that none of this code will work for anyone else; even researchers with acc
 - `explorer-shiny` R source code (with some SQL inputs) for the interactive front end.  Around 90% of the way to deployment-readiness.
 - `synthesis` R source code for creating a synthetic version of the data.  Around 10% of the way to deployment-readiness.
 - `create-sample-IDI` SQL source code for creating a random sample small version of the IDI.  Only used during development (to run code on a smaller side database to help with testing and development).
-
-Issues have been opened on this repository.
 
 ### Disclaimer
 
