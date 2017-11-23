@@ -1,0 +1,77 @@
+
+body {
+  font-family: "Source Sans Pro", Times, serif;
+}
+
+p.formula {
+  color: #004f9e;
+}
+
+li {
+    line-height: 1.5;
+    padding: 5px;
+}
+
+ .tabbable > .nav > li > a                  {background-color: #706f6e;  color:white}
+ .tabbable > .nav > li[class=active]    > a {background-color: #004f9e; color:white}
+
+
+.irs-bar {
+  background-color: #004f9e;
+  border: #004f9e;
+}
+
+.irs-to {
+  background-color: #004f9e;
+}
+
+.irs-bar-edge {
+  background-color: #004f9e;
+}
+
+
+.irs-from {
+  background-color: #004f9e;
+}
+
+.irs-single {
+  background-color: #004f9e;
+}
+
+h1 {
+  color: white;
+  font-weight: bold;
+  line-height: 2.5;
+  font-size: 200%;
+  text-indent: 20px;
+  background-color: rgb(236, 102, 8);
+}
+
+h2 {
+  color: #222!important;
+  padding: 0;
+  line-height: 1.1em;
+  font-size: 1.20em;
+  font-weight: bold;
+  margin: 25px 0 5px 0;
+}
+
+    
+
+
+h3 {
+  font-size: 109%;
+  font-weight: bold;
+}
+
+h4 {
+  font-size: 100%;
+  font-weight: bold;
+  font-style: italic;
+}
+
+h5 {
+  font-size: 100%;
+  font-style: italic;
+  font-style: underline;
+}

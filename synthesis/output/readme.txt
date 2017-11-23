@@ -1,0 +1,1 @@
+this folder holds both exploratory and presentation output from the synthesis process.  However, it is ignored by subversion and Git so will show up in version control repositories as empty.

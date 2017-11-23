@@ -1,0 +1,75 @@
+"","variable_code","short_name","long_name","quality","origin","var_type","grain","full_description","origin_tables","units","earliest_data"
+"1",16,"Abuse_events","Number of child, youth and family abuse events","Good","CYF","count","person-period","Simple count of all recorded abuse events.  No attempt has been made at this stage to remove duplicates,
+		 limit to particular types of abuse or any other filtering.","IDI_Clean.cyf_abuse_event","number of events",1964-06-11
+"2",20,"ACC_claims","ACC Injury Claims","Good","ACC","count","person-period","Count by person of all ACC claims, rolled up into year ending March based on accident date.  No filtering or removal of duplicates has been done.","IDI_Clean.acc_clean.claims","number of claims",2015-03-31
+"3",21,"ACC_value","Value of ACC injury claims","Good","ACC","continuous","person-period","Sum of values of ACC claims, rolled up into year ending March based on accident date.  No filtering or removal of duplicates has been done.","IDI_Clean.acc_clean.claims","dollars",NA
+"4",6,"Age","Age on 30 September","Good","DIA","continuous","person-period","The ages of everyone on the spine on the last day of each month, back to 1990 and assuming everyone was born on the 
+		15th of their birth month, are stored in intermediate.age_end_month.  The age on 30 September of year Y minus 1 is taken as 
+		the average age of an individual in Year Ending March Y.  For example, if you are 12 on 30 September 2000, you were
+		aged 11 on 30 September 1999 in the middle of ""year ending March 2000""","intermediate.age_end_month which in turn was generated from IDI_Clean.dia_clean.deaths, IDI_Clean.dia_clean.births","years",1990-01-31
+"5",28,"Asian","Asian","Good","SNZ","category","person","Ethnicity as estimated by the best of the multiple sources available.","IDI_Clean.data.personal_detail",NA,NA
+"6",8,"Benefits","Net Tier 1, 2 and 3 Benefits","Good","MSD","continuous","person-period","Combined Tier 1, Tier 2 and Tier 3 benefits for the period.  No duplications or overlapping spells have been removed.
+		No adjustments have been made for family relationships - benefits are allocated to individuals, as per the summary tables
+		in the msd_clean schema eg IDI_Clean.msd_clean.msd_first_tier_expenditure.","IDI_Clean.msd_clean.msd_first_tier_expenditure, IDI_Clean.msd_clean.msd_second_tier_expenditure,
+		IDI_Clean.msd_clean.msd_third_tier_expenditure","dollars",1986-03-31
+"7",32,"Birth_month_nbr","Birth month number","Moderate","SNZ","count","person","","IDI_Clean.data.personal_detail",NA,NA
+"8",31,"Birth_year_nbr","Birth year number","Moderate","SNZ","count","person","","IDI_Clean.data.personal_detail",NA,NA
+"9",23,"Born_NZ","Born in New Zealand","Good","DIA","category","person","Is the birth recorded by DIA.  If yes this usually means born in New Zealand, sometimes it means adopted (but not all adopted people will be found)","IDI_Clean.dia_clean.births",NA,NA
+"10",12,"Days_NZ","Days spent in New Zealand","Good","SNZ","count","person-period","This is a rolled up version of the intermediate.spells_in_nz table, which aims to have spells in New Zealand for two arrival types
+		(birth and border crossing) and three ""departure"" types (death, border crossing, and ""still in the country"" at time of latest movements 
+		data).  There are problems in the movements data eg with people who appear to have departed twice in a row without arriving in between.
+		These problems have been dealt with in the simplest way; an arrivial is treated as ""in the country"" until the next departure, so the 
+		second departure is effectively ignored.  This means an underestimate of days in the country in a small number of cases.  Births and 
+		deaths have also been de-duplicated, and the problem of a very small number of spine individuals with multiple births or deaths referred
+		to the IDI team.","IDI_Clean.dia_clean.births, IDI_Clean.dia_clean.deaths, IDI_Clean.dol_clean.movements","number of days",1861-09-01
+"11",18,"Education","Days in education","Good","MoE","count","person-period","Calculates days spent in education per march_ye. ""Education"" includes any spells identified in primary and secondary school, tertiary, 
+		industry training and targeted training placement data.","IDI_Sandpit.intermediate.days_in_education, which draws from the following data originally in IDI_Clean:
+		IDI_Clean.moe_clean.student_enrol,IDI_Clean.moe_clean.course,IDI_Clean.moe_clean.tec_it_learner,IDI_Clean.moe_clean.targeted_training",NA,1958-03-31
+"12",25,"Europ","European","Good","SNZ","category","person","Ethnicity as estimated by the best of the multiple sources available.","IDI_Clean.data.personal_detail",NA,NA
+"13",1,"Generic","Applies to all variables",NA,NA,NA,NA,"This is a place-holder variable for ""values"" such as ""No data"" that are shared across all variables.","None",NA,NA
+"14",3,"Hospital","Discharges from a public hospital","Good","MOH","count","person-period","The total number of recorded discharges from a public hospital in the designated period.  
+		Note that the same patient may be discharaged multiple times in a period, sometimes multiple times in a day.
+		No filtering is done to limit the count to ""serious"" issues or to try to aggregate ""common"" events
+		into a single one.","IDI_Clean.moh_clean.pub_fund_hosp_discharges_event","number of discharges",1988-03-31
+"15",2,"Income","Income all sources","Good","IRD","continuous","person-period","This is just the ""income from all sources"" from the IDI_Clean.data.income_tax_yr_summary table, which ultimately comes from IRD's tax data.","IDI_Clean.data.income_tax_yr_summary","dollars",1995-03-31
+"16",24,"Iwi","Iwi","Moderate","Census","category","person","Self-identified Iwi from the 2013 census, the only currently available information in the IDI.","IDI_Clean.cen_clean.census_individual , IDI_Sandpit.clean_read_CLASSIFICATIONS.CEN_IWI",NA,NA
+"17",26,"Maori","Maori","Good","SNZ","category","person","Ethnicity as estimated by the best of the multiple sources available.","IDI_Clean.data.personal_detail",NA,NA
+"18",29,"MELAA","Middle Eastern/Latin American/African","Good","SNZ","category","person","Ethnicity as estimated by the best of the multiple sources available.","IDI_Clean.data.personal_detail",NA,NA
+"19",15,"Mental_health","Number of mental health and addictions interactions with services","Good","MOH and MSD","count","person-period","Counts each known interaction with a service with evidence that it was related to mental health and addictions,
+		 based on a particular list of pharamceuticals, lab tests, hospitals, MSD (reason for incapacity), and PRIMHD.  Note that we are counting
+		 very different things here, so the number of interactions should be treated only as indicative. The definition used for each of the five
+		 is that published by the Social Investment Agency in mid 2017.  The pharmaceutical list used includes those marked by SIA as ""potential inclusion"".
+		 See https://github.com/nz-social-investment-agency/mha_data_definition for the original definition.  There will be a better way of converting
+		 the simple recording of the five types of events into estimates of type or degree of mental health and addictions challenge, suggestions welcomed.","IDI_Sandpit.intermediate.mha_events, which draws from the following data originally in IDI_Clean:
+		moh_clean.primhd primhd, moh_clean.pub_fund_hosp_discharges_event, moh_clean.pub_fund_hosp_discharges, 
+		moh_clean.pharmaceutical, moh_clean.lab_claims, msd_clean.msd_incapacity plus relevant metadata","number of interactions",1919-08-04
+"20",33,"Number_known_parents","Number of parents recorded in the database","Poor","SNZ","count","person","Number of parents known and recorded in the IDI, as per the data.personal_detail table.  Note that alternative ways of estimating parents 
+			give very different results (including high numbers of parent per person).","IDI_Clean.data.personal_detail",NA,NA
+"21",13,"Offences","Number of criminal offences","Good","Pol","count","person-period","Counts one offence per criminal incident (""occurence"") for which there were court or non-court proceedings, per person, per march ye. 
+		This differs from crime_victims, as it uses pre-count data ""occurrences"" instead of ""offences"". ""Occurrences"" are single incidents and can contain multiple ""offences"".
+		The reasoning behind using occurences rather than offences is that the post-count for offenders only counts one offence per day (even if there were multiple offences or occurences). 
+		We also would not want to count all pre-count offences, as there can be multiple offences associated with one occurence.
+		Counting occurences seems like a more precise way of counting. In this case, each criminal incident is considered one offence.
+		Note: uses date offender was proceeded against by Police, not neccessarily the date the incident occurred.","IDI_Clean.pol_clean.pre_count_offenders","number of offences",2010-03-31
+"22",30,"Other","Other","Good","SNZ","category","person","Ethnicity as estimated by the best of the multiple sources available.","IDI_Clean.data.personal_detail",NA,NA
+"23",27,"Pacif","Pacific Peoples","Good","SNZ","category","person","Ethnicity as estimated by the best of the multiple sources available.","IDI_Clean.data.personal_detail",NA,NA
+"24",34,"Parents_income_birth_year","Income of parents in the year of birth","Poor","SNZ","continuous","person","Simple combination of the parents identified in data.personal_detail with the tax year summary data.  Note that if identifiying the parents 
+			was poor, adding income information must be even poorer quality","IDI_Clean.data.personal_detail, IDI_Clean.data.income_tax_yr_summary",NA,NA
+"25",17,"Placement_events","Number of child, youth and family placement events","Good","CYF","count","person-period","Simple count of all commencing placement events, ignoring their length.  No attempt has been made at this stage to remove duplicates or any other filtering.","IDI_Clean.cyf_placements_event","number of events",1900-01-01
+"26",14,"Qualifications","Highest NQF level qualification","Good","MoE","category","person-period","Counts highest NQF qualification (moe_sql_nqf_level_code) recorded in secondary school, per person, per march ye.
+		It currently does not take into account any qualifications obtained in previous years, eg. someone could have achieved Level 3 in one year, and Level 2 the next year.
+		Nor does it populate any post secondary school years, ie. someone who is no longer in school will not have any current records. The only records currently showing will be for the years they completed qualifications in secondary school","IDI_Clean.moe_clean.student_qualification",NA,1900-03-31
+"27",4,"Region","Region most lived in","Good","notifications","category","person-period","Address notifications have been used to estimate the meshblock at which each person on the spine was living on the 15th of each month, and this is stored 
+as IDI_Sandpit.intermediate.address_mid_month.  These meshblock locations are joined to regions (ie Regional Councils) and aggregated by time period, and the region each individual
+lived longest in during the time period is recorded.  In the event of ties (eg six months each in two regions, if the period is a year) a region is chosen at random from the top 
+regions.  There is no continuous version of this variable, only the categorical value of the region.","IDI_Clean.data.address_notification, IDI_Sandpit.intermediate.address_mid_month, IDI_Sandpit.derived.dim_meshblock, 
+IDI_Metadata.clean_read_CLASSIFICATIONS.CEN_REGC13",NA,2000-03-31
+"28",5,"Resident","Resident on 30 June","Moderate","SNZ","category","person-period","This is the ""estimated resident population on 30 June"" estimates in IDI_Clean.data.snz_res_pop, for the 30 June that occurs in the given YE March.  No additional transformations have been made
+		to the data in the original table.  The original table is based on estimates of time spent in New Zealand and demonstrable activity (income, education, etc) in the previous 12(??)
+		months leading up to the 30 June. ","IDI_Clean.data.snz_res_pop",NA,2008-03-31
+"29",22,"Sex","Sex","Good","SNZ","category","person","","IDI_Clean.data.personal_detail",NA,NA
+"30",11,"TA","Territorial Authority most lived in","Good","notifications","category","person-period","Address notifications have been used to estimate the meshblock at which each person on the spine was living on the 15th of each month, and this is stored 
+		as IDI_Sandpit.intermediate.address_mid_month.  These meshblock locations are joined to districts/cities (ie Territorial Authority) and aggregated by time period, 
+		and the TA each individual lived longest in during the time period is recorded.  In the event of ties (eg six months each in two TAs, if the period is a year) a TA 
+		is chosen at random from the top TAs.  There is no continuous version of this variable, only the categorical value of the TA.","IDI_Clean.data.address_notification, IDI_Sandpit.intermediate.address_mid_month, IDI_Sandpit.derived.dim_meshblock, 
+		IDI_Metadata.clean_read_CLASSIFICATIONS.CEN_REGC13",NA,2000-03-31

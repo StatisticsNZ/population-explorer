@@ -1,0 +1,1 @@
+holds output such as PDF and PNG files with graphics.  Such documents are not tracked by the SVN version control system

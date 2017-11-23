@@ -1,0 +1,52 @@
+---
+title: "Issues and things to do"
+author: "Peter Ellis - Principal Data Scientist, Stats NZ"
+date: "29/09/2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Issues and things to do
+
+
+## Migrate to wtstsql35
+
+## Set up dev version of database so can work on it without hurting the Shiny app
+
+##  monthly version of resident population
+Two ways of doing this - by leveraging my spells in nz table (once we're on the test server)
+
+
+## change NULL sex in dim_person to "Unknown"
+This is something to do when we move to the test server
+
+
+## check options for indexing rounded seed
+
+It's possible having this pre-calculated will speed things up.  Now it is pre-calculated in dim_person_extended so this should help0.
+
+## why are there zero "not born in NZ"" income of females in 2012
+Cindy is following this up.
+
+# Done
+
+## 9 October 2017
+
+### how to deal with people with no record against a data collection
+
+Currently hospitals has a value code for no discharges, but no-one charged against it.  The others all have no entry in the main fact table, which means a zero in the views.  Changed this so Hospitals follows the same as the others
+
+### Add iwi to dim_person
+Did this with 2013 census.  So only partly available.
+
+## 5 October 2017
+### fact table value needs to be non NULL
+so variables like Region which inherently have no value need to be given something - probably zero
+
+### add data tables to shiny app
+
+### Add rounded seed to dim_person
+I did this by creating  a new dim_person_extended dimension table
