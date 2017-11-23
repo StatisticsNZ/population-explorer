@@ -35,10 +35,9 @@ There are two versions of the app:
 - pop-exp
 - pop-exp-dev
 
-All development should be done on pop-exp-dev, and periodically it should be just copied over to pop-exp (having first made sure the pop-exp schema in the database is up to date).  Some small changes need to be made in the pop-exp version after it has been copied over:
+All development should be done on pop-exp-dev.
 
-- change pop-exp-dev to pop-exp in the relevant line in `pop-exp/global.R`
-- change pop-exp-dev to pop-exp in the relevant lines in `pop-exp/src/*.sql` ie the files `continuous.sql`, `density.sql`, `two-cat.sql`
+The `global.R` file includes a range of parameters that can be adjusted (eg which database schema the app is pointing to - there are various versions including `pop_exp`, `pop_exp_test`, `pop_exp_sample` and (unlikely to be useful for this app) `pop_exp_dev`.
 
 ### Overall approach
 
