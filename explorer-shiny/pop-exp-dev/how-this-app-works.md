@@ -153,6 +153,131 @@ This section describes how step 2  (as described under "what the application doe
 
 - dynamically create a valid and nicely formatted SQL query to retrieve data from the datamart
 
+### The skeletons
+
+A skeleton for each of the five analysis types is stored in `./src` of the application directory system.  As an example, here is the file `./src/continuous.sql`, which is used as the basis of the query getting data for the Line chart tab
+
+```SQL
+/*
+Calculate average value by year of CONT1 for different combinations 
+of CAT1 and CAT2
+
+Author: Iddibot, TODAYSDATE
+
+PRAISE
+
+*/
+
+
+SELECT 
+  SUM(seed) - FLOOR(SUM(seed)) AS sum_seed,
+  SUM(a.CONT1 + (ROUND(seed, 0) * 0.2 - 0.1) * a.CONT1)  AS perturbed_total,
+  count(1)                     AS freq,
+  CAT1_tab.short_name          AS var_1,
+  CAT2_tab.short_name          AS var_2,
+  -- var_val_sequence is for meaningful ordering of our binned categories for CAT1 and CAT2:
+  CAT1_tab.var_val_sequence AS var_1_sequence,
+  CAT2_tab.var_val_sequence AS var_2_sequence,
+  a.year_nbr
+
+FROM  SCHEMA.vw_year_wide AS a
+-- Join to this so we get the permanent random seed:
+INNER JOIN (SELECT snz_uid, seed FROM SCHEMA.dim_person) AS b
+  ON a.snz_uid = b.snz_uid
+filter_join_here
+-- Join to this so we can filter by meaningful names for days in NZ:
+INNER JOIN SCHEMA.dim_explorer_value_year AS days_tab
+  ON days_tab.value_code = a.days_nz_code
+-- Join to this so we can use meaningful names for CAT1:
+INNER JOIN SCHEMA.dim_explorer_value_year AS CAT1_tab
+  ON a.CAT1_code = CAT1_tab.value_code
+-- Join to this so we can use meaningful names for CAT2:
+INNER JOIN SCHEMA.dim_explorer_value_year AS CAT2_tab
+  ON a.CAT2_code = CAT2_tab.value_code
+resident_join_here  
+filter_line_here
+
+GROUP BY 
+  CAT1_tab.short_name, 
+  CAT2_tab.short_name, 
+  CAT1_tab.var_val_sequence, 
+  CAT2_tab.var_val_sequence, 
+  a.year_nbr
+
+
+
+```
+
+These skeletons are not yet legitimate SQL.  To turn the above into legitimate SQL the process is basically:
+
+- substitute the correct database and schema for 'SCHEMA' (during development we use something like `IDI_Sandpit.pop_exp_test`; in the Data Lab it will be 'IDI_RnD.pop_exp', as well as on a different server, which was connected to in `global.R`)
+- substitute the correct column name (default is `maori`) for `CAT1`
+- substitute the correct column name (default is `sex`) for `CAT2`
+- substitute the correct column name (default is `income`) for `CONT1`
+- substitute appropriate things for Iddibot to say for `TODAYSDATE` and `PRAISE`
+- replace `resident_join_here` with either a blank line or a correct `INNER JOIN ... ON` STATEMENT
+- - replace `filter_join_here` with an appropriate `WHERE` clause (which can be quite complex, as there are up to five variables the user can filter by - year of observation, year of birth, days in New Zealand, residency, and one of their own choice).
+
+The end result is as follows (which is what the user sees if they "Update line chart data" with the opening settings)
+
+```SQL
+/*
+Calculate average value by year of income for different combinations 
+of maori and sex
+
+Author: Iddibot, 2017-11-25 09:45:04
+
+Mhm. The IDI is tremendous!  You're enormously initiating this.
+
+*/
+
+
+SELECT 
+  SUM(seed) - FLOOR(SUM(seed)) AS sum_seed,
+  SUM(a.income + (ROUND(seed, 0) * 0.2 - 0.1) * a.income)  AS perturbed_total,
+  count(1)                     AS freq,
+  maori_tab.short_name          AS var_1,
+  sex_tab.short_name          AS var_2,
+  -- var_val_sequence is for meaningful ordering of our binned categories for maori and sex:
+  maori_tab.var_val_sequence AS var_1_sequence,
+  sex_tab.var_val_sequence AS var_2_sequence,
+  a.year_nbr
+
+FROM  IDI_Sandpit.pop_exp_sample.vw_year_wide AS a
+-- Join to this so we get the permanent random seed:
+INNER JOIN (SELECT snz_uid, seed FROM IDI_Sandpit.pop_exp_sample.dim_person) AS b
+  ON a.snz_uid = b.snz_uid
+-- Join to this so we can get region_code names to filter by: 
+INNER JOIN IDI_Sandpit.pop_exp_sample.dim_explorer_value_year AS fil_tab
+  ON fil_tab.value_code = a.region_code
+-- Join to this so we can filter by meaningful names for days in NZ:
+INNER JOIN IDI_Sandpit.pop_exp_sample.dim_explorer_value_year AS days_tab
+  ON days_tab.value_code = a.days_nz_code
+-- Join to this so we can use meaningful names for maori:
+INNER JOIN IDI_Sandpit.pop_exp_sample.dim_explorer_value_year AS maori_tab
+  ON a.maori_code = maori_tab.value_code
+-- Join to this so we can use meaningful names for sex:
+INNER JOIN IDI_Sandpit.pop_exp_sample.dim_explorer_value_year AS sex_tab
+  ON a.sex_code = sex_tab.value_code
+-- Join to this so we can get resident/non resident to filter by:
+INNER JOIN IDI_Sandpit.pop_exp_sample.dim_explorer_value_year AS res_tab
+  ON res_tab.value_code = a.resident_code
+    
+WHERE res_tab.short_name = 'Resident on 30 June' 
+    AND days_tab.short_name in ('1 to 90 days', '91 to 182 days', '183 or more days')
+    AND fil_tab.short_name in (N'Waikato Region') 
+    AND year_nbr >= 2005 AND year_nbr <= 2016
+
+GROUP BY 
+  maori_tab.short_name, 
+  sex_tab.short_name, 
+  maori_tab.var_val_sequence, 
+  sex_tab.var_val_sequence, 
+  a.year_nbr
+
+```
+
+
 ## Analysis
 
 This section describes how step 3 (as described under "what the application does") is performed:
