@@ -41,6 +41,8 @@ The `global.R` file includes a range of parameters that can be adjusted (eg whic
 
 ### Overall approach
 
+The approach is described in some detail in ['how-this-app-works.md'](https://github.com/StatisticsNZ/population-explorer/blob/master/explorer-shiny/pop-exp-dev/how-this-app-works.md).
+
 Within the app's own subfolder (eg `./pop-exp-dev`), the files that make up the actual app are in the root folder:
 
 * `global.R` - R code that is run when the app is fired up and does things needed for both the client and server side eg grabs the values of the value and variable dimension tables from the database
