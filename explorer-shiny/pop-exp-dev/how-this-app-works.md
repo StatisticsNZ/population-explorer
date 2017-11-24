@@ -47,14 +47,14 @@ There are also two sub-directories:
 	- 'prism.js' is a JavaScript program that performs the actual syntax highlighting and has been downloaded from the same location.  
 	- `SNZlogo1.png` is self-explanatory
 
-## The user interface
+## Structure of `ui.R`
 
 This section describes how steps 1 and 4 (as described under "what the application does") are performed:
 
 - user choices to control the analysis
 - rendering results on the screen
 
-### Structure of `ui.R`
+This functionality is controlled by the `ui.R` script.
 
 
 ### Choices made by the user and returned as variables
@@ -319,7 +319,7 @@ A few things to note here:
 - the substitutions eg of `maori` for `CAT1` take place through the comments as well as the actual query, so Iddibot can explain why it is doing all those joins to the `dim_explorer_value_year` table. - we do all those joins we can have a query that reads nicely in English in the `WHERE` clause, rather than making cryptic references to codes.  Iddibot knows the codes and could use the `maori_code` in the original view instead of the value `short_name` and hence save all those joins, but then queries wouldn't necessarily work on future versions of the database as the `value_code` is made up during the build process.  The joins work fairly fast; every column in `vw_year_wide` with a name ending in `_code` has a foreign key joining it to `dim_explorer_value_code` so the query optimizer knows there are no mismatches, and the columnstore index on `vw_year_wide` seems to work very well.
 - the use of `N'Waikato Region` is because some of the values of `short_name` can have macrons in them, so we need to force SQL Server to recognise that string as NVARCHAR (which the original database column it refers to is)
 - although the values of `short_name` may have macrons, the column name `maori_code` in `vw_year_wide` doesn't (by design), so one of the tasks in constructing the SQL is to handle that issue
-- the user chose a `long_name` for their variables from the widgets in `ui.R` (eg "Income from all sources"), so we need to translate that into `short_name` for the query.  This is partly for readability of the end SQL, and partly because the categorical columns in `vw_year_wide` all have a name in the format `short_name_code` eg `maori_code`, even though the `long_name` chosen by the user was "Māori ethnicity"
+- the user chose a `long_name` for their variables from the widgets in `ui.R` (eg "Income from all sources"), so we need to translate that into `short_name` for the query ("Income" or `income`).  This is partly for readability of the end SQL, and partly because the categorical columns in `vw_year_wide` all have a name in the format `short_name_code` eg `maori_code`, even though the `long_name` chosen by the user was "Māori ethnicity"
 - In the example above, the `days_tab.short_name in ('1 to 90 days', '91 to 182 days', '183 or more days')` is redundant because all the data in `vw_year_wide` is only for people recorded as being in the country at least one day per year.  It's left in to be explicit and to make it easier to change if the user opts for a different combination of filtering on days in NZ
 
 The R code in `server.R` looks after all the above, in two stages:
@@ -327,7 +327,57 @@ The R code in `server.R` looks after all the above, in two stages:
 1. generic creation of `filter_line_here`, `filter_join_here` and `resident_join_here` which is used for all four of the Line chart, Crosstabs, Distribution, and Heatmap tabs.  This is done in the section marked `#--------work out line of code doing filtering (ie "WHERE"), to put into SQL--------`.
 2. substitution of those three elements (or modified versions of them), the analysis-specific variables, andother miscellany like the date into the relevant SQL skeleton.  This is done in the the relevant section for each
 
+Here is an excerpt from the R code that does some of that first step - create a text string that can be substituted into the query to replace the `filter_join_here` in the original
 
+```R
+
+  # filt_var_name is the name of a variable eg region_code to be used in WHERE statements later on
+  filt_var_name <- reactive({
+    paste0(variables[variables$long_name == input$filt_var, "short_name"], "_code") %>%
+      remove_macron() %>%
+      tolower()
+  })
+  
+    # join to value dimension table on basis of variable chosen for filtering:
+  filter_join <- reactive({
+    if(input$filt_var != "none"){
+      txt <-  paste0("-- Join to this so we can get ", filt_var_name(), " names to filter by: \nINNER JOIN ", schema, ".dim_explorer_value_year AS fil_tab
+  ON fil_tab.value_code = a.", filt_var_name())
+      } else 
+    txt <- ""
+  })
+
+```
+A few things to note:
+- in the `server.R` file of a Shiny app, much of the work is done through the creation of reactive objects - these are objects that change when user inputs (in this case `input$filt_var`) are changed.
+- `remove_macron()` is a utility function defined earlier for self-explanatory purpose
+- the `filter_join()` reactive object includes in-line comments in the SQL it is writing for Iddibot (by starting with a line that starts with `-- Join to...`).  If we can't get the bots to comment their code nicely, how can we expect researchers to?
+
+And here is an excerpt from R code performing the second step - substituting user-modified text into the SQL skeleton:
+
+```R
+  the_sql_lines <- reactive({
+    if(input$action_line == 0){return("")}
+    isolate({
+      sql <- gsub("CONT1", tolower(y_variable()), line_sql)
+      sql <- gsub("PRAISE", praise("${Exclamation}. The IDI is ${adjective}!  You're ${adverb_manner} ${creating} this."), sql)
+      sql <- gsub("TODAYSDATE", Sys.time(), sql)
+      sql <- gsub("CAT1", tolower(bar_variables()[1]), sql)
+      sql <- remove_macron(gsub("CAT2", tolower(bar_variables()[2]), sql))
+      sql <- gsub("FILTVAR", filt_var_name(), sql)
+      sql <- gsub("filter_join_here", filter_join(), sql)
+      sql <- gsub("filter_line_here", filter_line(), sql)
+      sql <- gsub("resident_join_here", resident_join(), sql)
+      return(sql)
+    })
+  })
+```
+
+Note:
+
+- the use of `isolate({})` around the main operative code means that it doesn't re-write itself whenever a user plays around with a widget, but only when they push the "Update line data" button
+- `input$action_line` is attached to that "Update line data" button.  As it is outside of the `isolate({})` function, it will activate the entire `the_sql_lines()` reactive object when that button is pushed.
+- When the button has been pushed zero times ie on application start up, we return an empty string rather than SQL.  
 
 ## Analysis
 
@@ -335,7 +385,23 @@ This section describes how step 3 (as described under "what the application does
 
 - analysis including confidentialisation, and create summary tables, graphics and explanatory text
 
+This part is fairly straightforward.  There are five subsections in this part of the `server.R` file, which starts with:
+
+```R
+#============================Main analysis code for each of the analysis-type tabs starts here===================
+```
+
+Each of those follows basically the same pattern:
+
+- Complete the tab-specific SQL definition as described above
+- Create an object with a name like `output$message_lines` that tells how many rows of data have been downloaded (this is handy both for developers and end users; it's not a confidentiality problem because it never refers to an actual count of people, just of rows)
+- Send the query to the database and save the results in a reactive object with a name like `data_orig_lines()`
+- Perform any necessary manipulation on that data such as fixed random rounding (using the `fix_rand_round()` function defined in `./src/fix_rand_round.R`) and ordering the levels in categorical factors according to their relevant entries in the `var_val_sequence` column of the `dim_explorer_value_year` table in the database (so for example the character labels of income bands are rendered in the correct order in graphics). The results of this stage are typically stored in a reactive object with a name like `data_line()`
+- Where relevant ("Line chart", and "Crosstabs"), create a table to be downloaded and rendered on the screen, with even further rounding if asked for (which is the default).  Typically stored in a object with a name like `data_line_table()
+- Create the graphic
+- Create the explanatory text, calling on a custom function for the purpose
+- "render" all the necessary objects as part of the `output` list, which is passed back to the user interface (for example, by `output$explain_lines <- renderText({explanatory_text_lines()})`)
 
 
-
+Details vary of course, and the "cohort modelling" is the most complex of the five as it fits two fairly sophisticated statistical models (a random forest from `ranger` and a generalized linear model with elastic net regularisation from `glmnet`) and has a more complex and unpredictable graphic and table to draw.  But the basic pattern is as used five times.
 
