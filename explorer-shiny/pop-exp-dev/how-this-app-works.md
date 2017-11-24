@@ -33,19 +33,40 @@ The codebase consists of a small number of files in R, SQL, CSS and JavaScript h
 In the root directory, we have:
 
 - `global.R` is run first, when a user initiates the application.  It loads necessary R packages and functionality, sets parameters such as which copy of the database to use, what minimum cell size of counts before suppressing them, and how high to make graphics in pixels.  It also creates appropriately structured R objects with information on the variables available in the database (which it interrogates to create those objects), for use in the user's widgets and in the server-side analysis.
-- `ui.R` creates the user interface and performs steps 1 and 4
+- `ui.R` creates the user interface and performs steps 1 and 4 as described above under "What the application does"
 - `server.R` runs server-side operations and performs steps 2 and 3
 
 There are also two sub-directories:
 
 - `src` holds two types of source code:
-    - `*.R` files create functionality that has been abstracted out of `server.R` for maintainability purposes.  All these files are run by `global.R` during application initiation by `scripts <- list.files("src", pattern = "\\.R$", full.name = TRUE); devnull <- lapply(scripts, source)`
+    - `*.R` files create functionality that has been abstracted out of `server.R` for maintainability purposes.  All these files are run by `global.R` during application initiation by the two lines of code that look like: `scripts <- list.files("src", pattern = "\\.R$", full.name = TRUE); devnull <- lapply(scripts, source)`
 	- `*.sql` files are skeletons of SQL queries that are used by `server.R` as the basis for constructing actual legitimate queries.
 - `www` holds assets for the web page and in particular:
-    - `styles.css` is a cascading style sheet for web page fonts, heading sizes and colours, etc.  Edit this to control things like heading size.
+    - `styles.css` is a cascading style sheet to give a Stats NZ look and feel to the web page.  Edit this to control things like fonts, heading sizes and colours for text other than that which is part of images.
 	- `prism.css` controls the look of the SQL syntax highlighting in the browser.  Don't edit this file directly (well you can, but it's probably not worth the effort), but you can replace the file altogether with a different version from [http://prismjs.com/](http://prismjs.com/).  The currently chosen theme is "Solarized Light"
 	- 'prism.js' is a JavaScript program that performs the actual syntax highlighting and has been downloaded from the same location.  
-	- `SNZlogo1.png`
+	- `SNZlogo1.png` is self-explanatory
+
+## The user interface
+
+This section describes how steps 1 and 4 (as described under "what the application does") are performed:
+
+- user choices to direct analysis
+- rendering results on the screen
+
+## Building the SQL
+
+This section describes how step 2  (as described under "what the application does") is performed:
+
+- dynamically create a valid and nicely formatted SQL query to retrieve data from the datamart
+
+## Analysis
+
+This section describes how step 3 (as described under "what the application does") is performed:
+
+- analysis including confidentialisation, and create summary tables, graphics and explanatory text
+
+
 
 
 
