@@ -74,14 +74,14 @@ The user is presented widgets to choose the variables that are relevant for thei
 | `cont_var_b` | A second continuous variable, used for the horizontal axis in the Heatmap. | `legit_cont_vars_list` |
 | `sample_size` | For the Distribution and Heatmap tabs, how many data points to download at random | 2,000 to 50,000 (default is 5,000)|
 | `trend_line_method` | For the Heatmap tab, which statistical method to use to draw the trend line? | "Smooth (LOESS or GAM)" (which is the default for `ggplot2::geom_smooth`), "Robust linear regression" (which is the `rlm` function from the MASS R package) |
-| `year` | A vector of two values, used for filtering the data to only observations that applied between those two years (inclusive). | 1990 to today's year minus 1 (as it is assumed today's year is going to have incomplete data - as indeed even year minus 1 normally does).  |
+| `year` | A vector of two values, used for filtering the data to only observations that applied between those two years (inclusive). | 1990 to `latest_year - 1` (`latest_year` is created by `ui.R` itself and is just today's year - as it is assumed today's year is going to have incomplete data - as indeed even `latest_year - 1` normally does).  |
 | `cohort_yn` | Should the data be limited to people just born in a particular range of years? | Logical |
-| `cohort_year` | If `cohort_yn` is true, which two years should be the birth range for the cohort? | 1930 to today's year minus 1|
+| `cohort_year` | If `cohort_yn` is true, which two years should be the birth range for the cohort? | 1930 to `latest_year - 1`|
 | `days_nz` | Multiple choice, filter by number of days spent in the country | The three choices of categorical value for days_nz |
 | `resident` | Should the data be limited to those estimated to be resident on 30 June? | Logical |
 | `filt_var` | Which variable should be used for further filtering in addition to years of observations, cohort birth year, days in New Zealand, and estimated residency? | `legit_cat_vars_list` plus "none" |
 
-The variables `line_precision` and `bar_precision` should be self-evident from looking at the code and comparing to the app.
+The variables `line_precision` and `bar_precision` control whether to show the data in those two tabs as fixed random rounded, or fixed random rounded and then rounded further to just two significant digits.
 
 #### Variables used for the cohort modelling tab:
 
@@ -89,7 +89,7 @@ The widgets to choose these variables only appear when the user has selected the
 
 | Variable | Use | Choices | 
 |--------|------|-------|
-| `cohort_response | What is the response variable to be in the regression? | `legit_cont_vars_list` |
+| `cohort_response` | What is the response variable to be in the regression? | `legit_cont_vars_list` |
 | `cohort_birth_year` | birth year | 1930 to `latest_year` |
 | `cohort_year_1` | Year of observations for explanatory variables | 1990 to `latest_year` |
 | `cohort_year_2` | Year for response data | 1990 to `latest_year` |
@@ -144,7 +144,8 @@ The following objects are generated in the server and made available to the user
 	- "glmnet_vars"
 	- "the_sql_cohort"
 	- "explain_cohort" (note that unlike the first four, "explain_cohort" is rendered in the side panel, not the main panel)
-	
+
+In `server.R`, these objects for transmitting back to `ui.R` are created as (for example) `output$ranger_plot`.	
 
 ## Building the SQL
 
