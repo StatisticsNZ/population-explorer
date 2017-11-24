@@ -147,6 +147,41 @@ The following objects are generated in the server and made available to the user
 
 In `server.R`, these objects for transmitting back to `ui.R` are created as (for example) `output$ranger_plot`.	
 
+## Structure of the `server.R` file
+
+The `server.R` file is the most important and the longest part of the application (around 800 lines at the time of writing), even though substantial chunks of code have been abstracted into other functions that are stored in the `./src/` directory.
+
+In the `server.R` file, main sections are started with comments like this:
+
+```R
+#======================dynamic code and UI generation===============
+```
+
+Subsections are started with comments like this:
+
+```R
+#------------------dynamic creation of pick box for filter options-------------
+```
+
+The overall structure is as follows:
+
+- Setup
+- The Server Side of the App
+- Dynamic code and UI generation
+	- work out line of code doing filtering (ie "WHERE"), to put into SQL
+	- dynamic creation of pick box for filter options
+	- other dynamic choices for the UI
+- Main analysis code for each of the analysis-type tabs starts here	
+	- Line chart
+	- bar chart ("Crosstabs")
+	- density plot ("Distribution")
+	- heatmap
+	- cohort modelling
+	- SQL output
+	
+	
+
+
 ## Building the SQL
 
 This section describes how step 2  (as described under "what the application does") is performed:
@@ -215,10 +250,11 @@ These skeletons are not yet legitimate SQL.  To turn the above into legitimate S
 - substitute the correct column name (default is `sex`) for `CAT2`
 - substitute the correct column name (default is `income`) for `CONT1`
 - substitute appropriate things for Iddibot to say for `TODAYSDATE` and `PRAISE`
-- replace `resident_join_here` with either a blank line or a correct `INNER JOIN ... ON` STATEMENT
-- - replace `filter_join_here` with an appropriate `WHERE` clause (which can be quite complex, as there are up to five variables the user can filter by - year of observation, year of birth, days in New Zealand, residency, and one of their own choice).
+- replace `filter_join_here` with either a blank line or a correct `INNER JOIN ... ON` STATEMENT for the optional variable the user is choosing to filter by
+- replace `resident_join_here` with either a blank line or a correct `INNER JOIN ... ON` STATEMENT if the user has chosen to filter to just estimated residents
+- replace `filter_line_here` with an appropriate `WHERE` clause (which can be quite complex, as there are up to five variables the user can filter by - year of observation, year of birth, days in New Zealand, residency, and one of their own choice).
 
-The end result is as follows (which is what the user sees if they "Update line chart data" with the opening settings)
+A typical end result is as follows (which is what the user sees if they "Update line chart data" with the opening settings)
 
 ```SQL
 /*
@@ -276,6 +312,21 @@ GROUP BY
   a.year_nbr
 
 ```
+
+
+A few things to note here:
+
+- the substitutions eg of `maori` for `CAT1` take place through the comments as well as the actual query, so Iddibot can explain why it is doing all those joins to the `dim_explorer_value_year` table. - we do all those joins we can have a query that reads nicely in English in the `WHERE` clause, rather than making cryptic references to codes.  Iddibot knows the codes and could use the `maori_code` in the original view instead of the value `short_name` and hence save all those joins, but then queries wouldn't necessarily work on future versions of the database as the `value_code` is made up during the build process.  The joins work fairly fast; every column in `vw_year_wide` with a name ending in `_code` has a foreign key joining it to `dim_explorer_value_code` so the query optimizer knows there are no mismatches, and the columnstore index on `vw_year_wide` seems to work very well.
+- the use of `N'Waikato Region` is because some of the values of `short_name` can have macrons in them, so we need to force SQL Server to recognise that string as NVARCHAR (which the original database column it refers to is)
+- although the values of `short_name` may have macrons, the column name `maori_code` in `vw_year_wide` doesn't (by design), so one of the tasks in constructing the SQL is to handle that issue
+- the user chose a `long_name` for their variables from the widgets in `ui.R` (eg "Income from all sources"), so we need to translate that into `short_name` for the query.  This is partly for readability of the end SQL, and partly because the categorical columns in `vw_year_wide` all have a name in the format `short_name_code` eg `maori_code`, even though the `long_name` chosen by the user was "Māori ethnicity"
+- In the example above, the `days_tab.short_name in ('1 to 90 days', '91 to 182 days', '183 or more days')` is redundant because all the data in `vw_year_wide` is only for people recorded as being in the country at least one day per year.  It's left in to be explicit and to make it easier to change if the user opts for a different combination of filtering on days in NZ
+
+The R code in `server.R` looks after all the above, in two stages:
+
+1. generic creation of `filter_line_here`, `filter_join_here` and `resident_join_here` which is used for all four of the Line chart, Crosstabs, Distribution, and Heatmap tabs.  This is done in the section marked `#--------work out line of code doing filtering (ie "WHERE"), to put into SQL--------`.
+2. substitution of those three elements (or modified versions of them), the analysis-specific variables, andother miscellany like the date into the relevant SQL skeleton.  This is done in the the relevant section for each
+
 
 
 ## Analysis
