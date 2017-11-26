@@ -432,8 +432,8 @@ Details vary of course, and the "cohort modelling" is the most complex of the fi
 
 In addition to the SQL templates, these functions are defined in src
 
-| Function | Script defined in | Purpose
-|----------|---------|
+| Function | Script defined in | Purpose |
+|----------|---------|----------|
 |  `data_link()` | `explain_bars_and_lines.R` |  For a given variable, a short sentence on its linkage rates |
 |  `explain_lines()` | `explain_bars_and_lines.R` | Create explanatory text for the line chart tab |
 |  `explain_bars()` | `explain_bars_and_lines.R` | Create explanatory text for the cross tabs tab |
