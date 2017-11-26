@@ -38,9 +38,10 @@ In the root directory, we have:
 
 There are also two sub-directories:
 
-- `src` holds two types of source code:
+- `src` holds three types of source code:
     - `*.R` files create functionality that has been abstracted out of `server.R` for maintainability purposes.  All these files are run by `global.R` during application initiation by the two lines of code that look like: `scripts <- list.files("src", pattern = "\\.R$", full.name = TRUE); devnull <- lapply(scripts, source)`
 	- `*.sql` files are skeletons of SQL queries that are used by `server.R` as the basis for constructing actual legitimate queries.
+	- `*.html` snippets (eg 'full-disclaimer.html') designed to be imported by R and used in `ui.R` as part of the applications' user-facing web page
 - `www` holds assets for the web page and in particular:
     - `styles.css` is a cascading style sheet to give a Stats NZ look and feel to the web page.  Edit this to control things like fonts, heading sizes and colours for text other than that which is part of images.
 	- `prism.css` controls the look of the SQL syntax highlighting in the browser.  Don't edit this file directly (well you can, but it's probably not worth the effort), but you can replace the file altogether with a different version from [http://prismjs.com/](http://prismjs.com/).  The currently chosen theme is "Solarized Light"
@@ -55,6 +56,27 @@ This section describes how steps 1 and 4 (as described under "what the applicati
 - rendering results on the screen
 
 This functionality is controlled by the `ui.R` script.
+
+The bulk of `ui.R` script in a Shiny app is a single set of nested functions under of which the first is `shinyUI()`.  This makes for a lot of brackets... On the plus side, the layout of the script intuitively follows the hierarchy of the page.  Here is how the `ui.R` script is structured:
+
+- `shinyUI` establishes this as a user interface
+	- `navbarPage` says everything that follows is part of a bootstrap navbar page ie those tabs along the top
+		- `tabPanel("Welcome")` - welcoming image and text
+		- `tabPanel("Explore")` - the guts of the app
+			- `sidebarLayout()` - the Explore page is going to have a side bar and a main panel
+				- `sidebarPanel()` - definition of all the widgets and text that appears in the sidebar ie nearly all the drop down boxes.  There is some straightforward logic in this part with the use of `conditionalPanel()` so that some of the widgets only appear when needed eg the option to choose a second continuous variable only appears when the heatmap tab (see below) is select
+				-  `mainPanel()` - the panel that holds the results		
+					- tabsetPanel()` - this main panel is going to have tabs itself
+						- `tabPanel("Line Charts")
+						- `tabPanel("Cross tabs")
+						- `tabPanel("Distribution")
+						- `tabPanel("Heatmap")
+						- `tabPanel("Cohort modelling")
+					- some generic text (eg the short disclaimer) that appears under everything in the main panel
+		- `tabPanel("Variables")`
+		- `tabPanel("Disclaimer")
+		- `tabPanel("FAQ")
+		- `tabPanel("Credits")
 
 
 ### Choices made by the user and returned as variables
@@ -149,7 +171,7 @@ In `server.R`, these objects for transmitting back to `ui.R` are created as (for
 
 ## Structure of the `server.R` file
 
-The `server.R` file is the most important and the longest part of the application (around 800 lines at the time of writing), even though substantial chunks of code have been abstracted into other functions that are stored in the `./src/` directory.
+The `server.R` file is the most substantial part of the application (around 800 lines at the time of writing), even though some code have been abstracted into other functions that are stored in the `./src/` directory.
 
 In the `server.R` file, main sections are started with comments like this:
 
@@ -163,7 +185,7 @@ Subsections are started with comments like this:
 #------------------dynamic creation of pick box for filter options-------------
 ```
 
-The overall structure is as follows:
+The overall structure, as marked by those types of section separators, is as follows:
 
 - Setup
 - The Server Side of the App
@@ -375,6 +397,7 @@ And here is an excerpt from R code performing the second step - substituting use
 
 Note:
 
+- `line_sql` is basically original skeleton referred to earlier, imported via line_sql     <- gsub("SCHEMA", schema, paste(readLines("src/continuous.sql"), collapse = "\n"))
 - the use of `isolate({})` around the main operative code means that it doesn't re-write itself whenever a user plays around with a widget, but only when they push the "Update line data" button
 - `input$action_line` is attached to that "Update line data" button.  As it is outside of the `isolate({})` function, it will activate the entire `the_sql_lines()` reactive object when that button is pushed.
 - When the button has been pushed zero times ie on application start up, we return an empty string rather than SQL.  
