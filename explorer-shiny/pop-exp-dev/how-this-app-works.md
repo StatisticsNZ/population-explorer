@@ -66,17 +66,17 @@ The bulk of `ui.R` script in a Shiny app is a single set of nested functions und
 			- `sidebarLayout()` - the Explore page is going to have a side bar and a main panel
 				- `sidebarPanel()` - definition of all the widgets and text that appears in the sidebar ie nearly all the drop down boxes.  There is some straightforward logic in this part with the use of `conditionalPanel()` so that some of the widgets only appear when needed eg the option to choose a second continuous variable only appears when the heatmap tab (see below) is select
 				-  `mainPanel()` - the panel that holds the results		
-					- tabsetPanel()` - this main panel is going to have tabs itself
-						- `tabPanel("Line Charts")
-						- `tabPanel("Cross tabs")
-						- `tabPanel("Distribution")
-						- `tabPanel("Heatmap")
-						- `tabPanel("Cohort modelling")
-					- some generic text (eg the short disclaimer) that appears under everything in the main panel
+					- `tabsetPanel()` - this main panel is going to have tabs itself
+						- `tabPanel("Line Charts")`
+						- `tabPanel("Cross tabs")`
+						- `tabPanel("Distribution")`
+						- `tabPanel("Heatmap")`
+						- `tabPanel("Cohort modelling")`
+					- some generic text (eg the short disclaimer) that appears under everything in the main panel, regardless of which tab is selected
 		- `tabPanel("Variables")`
-		- `tabPanel("Disclaimer")
-		- `tabPanel("FAQ")
-		- `tabPanel("Credits")
+		- `tabPanel("Disclaimer")`
+		- `tabPanel("FAQ")`
+		- `tabPanel("Credits")`
 
 
 ### Choices made by the user and returned as variables
@@ -428,3 +428,21 @@ Each of those follows basically the same pattern:
 
 Details vary of course, and the "cohort modelling" is the most complex of the five as it fits two fairly sophisticated statistical models (a random forest from `ranger` and a generalized linear model with elastic net regularisation from `glmnet`) and has a more complex and unpredictable graphic and table to draw.  But the basic pattern is as used five times.
 
+## Helper functions located in `src`
+
+In addition to the SQL templates, these functions are defined in src
+
+| Function | Script defined in | Purpose
+|----------|---------|
+|  `data_link()` | `explain_bars_and_lines.R` |  For a given variable, a short sentence on its linkage rates |
+|  `explain_lines()` | `explain_bars_and_lines.R` | Create explanatory text for the line chart tab |
+|  `explain_bars()` | `explain_bars_and_lines.R` | Create explanatory text for the cross tabs tab |
+| `explain_cohort()` | `explain_cohort.R` | Create explanatory text for the cohort modelling tab |
+| `fix_rand_round()` | `fix_rand_round.R` | For a given modulus of sum of random seeds and raw total, return the fixed random rounding base three total |
+| `format_sql()`  | `format_sql.R` | Take an SQL query and surround it with HTML tags so it will by syntax highlighted, and in a reactive function that will activate the JavaScript needed to do the highlighting |
+| `html_to_df()` | `make_excel_version.R` | Take an HTML explanation (like that returned by `explain_lines()`, convert from HTML to reasonably formatted plain text |
+| `make_excel_version()` | `make_excel_version.R` | Save a formatted Excel workbook of three tabs with data, the SQL that created it, and an English description |
+| `paste_and()` | `paste_and.R` | Convert `c("lions", "tigers", "bears")` to `"lions, tigers and bears"` |
+| `prism_code_block()` | `prism_functions.R` | Function to surround a code block in so when it is created by the server it activates the prism.js syntax highlighting JavaScript program |
+| `remove_macron()` | `remove_macron.R` | Remove macrons from the letter a in any text |
+| - | `statsnz-pallete.R` | Various objects such as `snz_brand` and `snz_graph` holding the colours used by Stats NZ |
