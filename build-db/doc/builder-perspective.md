@@ -4,6 +4,8 @@ Peter Ellis
 
 This document outlines the approach to building the Population Explorer datamart.  It should be read in conjunction with the accompanying "Population Explorer datamart - user perspective" which outlines the datamart's structure, defines the variables in each table, etc.
 
+Most of the documentation for this project is in comments for each relevant script.  This document is only to provide an overview.
+
 ## Overall approach
 
 The datamart is built In the `IDI_Sandpit` database on the `wtstsql35` server.  The SQL scripts that build the database all refer to the `pop_exp_dev` schema in `IDI_Sandpit`, but the datamart is rarely built in that actual schema.  Instead, there are four schemas that can hold copies of the datamart:
@@ -22,8 +24,7 @@ There are three other relevant schemas in the database:
 - `dbo` holds 
 	- the build log, 
 	- a lookup table of random numbers from 0 to 300 matching to all six digit numbers used in the generation of random seeds
-	- occasional quasi-temporary objects such as a table of variables left to add to the wide table in the pivoting process
-
+	
 The datamart is built by R running a (long) sequence of SQL scripts.  R functions:
 
 - load up each SQL script in sequence
@@ -34,7 +35,7 @@ The datamart is built by R running a (long) sequence of SQL scripts.  R function
 
 A master script `build-db\build.R` will build the whole datamart from scratch with a single click.  Parameters set at the top of that script indicate 
 
-- which is to to be the target (eg `pop_exp_alpha`), 
+- which schema is to to be the target (eg `pop_exp_alpha`), 
 - whether the source data is to come from the `IDI_Clean` database or the 1/100 sampled version `IDI_Sample` database
 - `spine_to_sample_ratio` which further limits the data eg 10 means 1 / 10 sample of the IDI is used as the basis for `pop_exp_xxx`
 
@@ -49,7 +50,7 @@ A full build of `intermediate` takes about 20 hours.  A full build of `pop_exp` 
 
 The source code for the Population Explorer is nearly all SQL, with some R used for integration - running the build and test process.  
 
-The working version of the code is [\\wprdsql35\input_IDI\Population Explorer\build-db](\\wprdsql35\input_IDI\Population Explorer\build-db).  The `Population Explorer` directory system, of which `build-db` is the sub-system holding the code that builds the database, is a checked out version of the SVN repository that lives at \\wprdsql35\input_IDI\pop-exp-svn.  There is no need to touch \\wprdsql35\input_IDI\pop-exp-svn; all work can be done in \\wprdsql35\input_IDI\Population Explorer\build-db.
+The working version of the code is `\\wprdsql35\input_IDI\Population Explorer\build-db`.  The `Population Explorer` directory system, of which `build-db` is the sub-system holding the code that builds the database, is a checked out version of the SVN repository that lives at `\\wprdsql35\input_IDI\pop-exp-svn`.  There is no need to touch `\\wprdsql35\input_IDI\pop-exp-svn`; all work can be done in `\\wprdsql35\input_IDI\Population Explorer\build-db`.  A clone of the whole repository also exists in `\\wprdfs09\IMR-Data\IMR2017-05\checking\peter_ellis\pop-exp-svn-clone`.  This version is used for output checking prior to updating the external copy on GitHub.
 
 The subdirectories under `build-db` have the following purposes:
 
@@ -61,7 +62,6 @@ The subdirectories under `build-db` have the following purposes:
 | 03-year-facts | SQL scripts that populate `fact_rollup_year`, 'dim_explorer_variable` and `dim_explorer_value_year`.  One script per variable (eg Income all sources).
 | 04-year-pivot | SQL scripts that add indexes to `fact_rollup_year`, columnstore indexes to `dim_explorer_value_year` (now it is finished being added to) and pivot the data into the `vw_year_wide` table that is used by the front end and is expected to be used by researchers.  Note the name of this table implies it is a view, and it originally was; but it has been materialized as a table for performance.  Indexed views cannot have columnstore indexes in SQL Server 2012, and a columnstore index is essential for this wide table to deliver any acceptable query performance. Final steps in this stage included adding foreign key constraints to the wide "view" and columnstore indexes to it and to `dim_explorer_variable` (this can only happen now because that table is added to during the pivoting process; as each variable is added to the wide table it is recorded in `dim_explorer_variable.loaded_into_wide_table` as "Loaded"; this is to make it possible to resume from where it got up to if there is a problem, as generally happens when working with the full data). |
 | 06-qtr-facts | Populate `fact_rollup_qtr` and `dim_explorer_value_qtr`.  Only variables that were already added to the yearly version are added to the quarterly, so `dim_explorer_variable` doesn't change during the load of quarterly data |
-| broken | scripts that aren't working |
 | doc | Documentation including snapshots of database diagrams, an Excel workbook with selected columns from `dim_explorer_variable` that is built and formatted by R as part of the build process, and this document |
 | one-offs | Mostly this is SQL scripts that are not essential for the build process but which contain useful utilities (eg `check-log.sql`, `find-variables-with-duplicate-values-per-person.sql`, `spare-disk-space.sql`.  This also contains an R script that created the random number table, and some R utility analysis such as `examine-timings.R` used to analyse performance based on times recorded in the log for sample queries.|
 | output | Images and files from analysis (not much in here) |
@@ -71,9 +71,31 @@ The subdirectories under `build-db` have the following purposes:
 
 ### SQL
 
+SQL has two types of user-defined functionality:
 
+- functions take inputs and return outputs
+- stored procedures have side effects (such as creating a table or an index)
+
+| Name |  Type | Purpose |
+|-----|------|-------|
+| `lib.add_cs_ind` | Procedure | Creates a columnstore index on a table, using all of the columns in that table.  Used extensively. |
+|  `lib.check_enough_rows` | Procedure | Throws and error if there are less than 1,000 rows in the fact table for a given variable in the variable dimension table.  Not used as it is prohibitively slow. |
+| `lib.clean_out_all` | Procedure | Removes all facts, values, and variable attributes associated with a given variable from both the quarterly and annual versions.  Used during development to avoid multiple iterations of a variable. |
+| `lib.clean_out_qtr` | Procedure | Removes all facts and values associated with a given variable from just `fact_rollup_qtr` and `dim_explorer_value_qtr`. |
+| lib.remove_var | Procedure | Removes values and variable information associated with a particular variable, but does not remove anything from the main fact table.  Used during development for variables like sex and ethnicity that do not have facts in the person-variable-period fact table, but do need to be given entries in the value table. |
+| `lib.remove_spell_overlaps` | Table-valued function | For a given table structure of spells, remove the overlap between spells.  Not used because it is prohibitively slow compared to repeating the code in a script. |
+| `lib.string_split` | Table-valued function | Splits a comma-separated text string into a table with a row for each value.  Used in the process that matches up the information on source tables in dim_explorer_variable with the linkage rates. |
+| `lib.string_strip` | Function | Strips all the tabs, linebreaks and spaces out of a character string. Also used in matching information on source tables to linkage rates |
+
+In addition to the above multi-use functions, many of the SQL scripts create use-once stored procedures, execute them, and then drop them.  For operations that included `WHILE BEGIN ... END` chunks, this turned out to be a safer way of packaging up functionality for running remotely from R than leaving them as scripts.  However, these procedures still need to be defined in situ so when R runs them it can make the necessary subsitutions (eg replace "pop_exp_dev" with "pop_exp_alpha").
 
 ### R
 
+R does not distinguish between functions that are strictly functions (transform inputs to outputs) and those with side effects.
 
+| Name | Purpose |
+|-----|-------|
+| `sql_execute()` | The workhorse function for the build process.  For a given SQL filename, it imports the file, splits it into batches based on the word `GO` (which is T-SQL, not ANSI SQL), performs text substitutions, etc. |
+| `sql_execute_all()` | Takes all the SQL scripts in a given folder and passes them one at a time to `sql_execute` in alphabetical order (which is why scripts are generaly numbered eg 00-setup.sql, 01-something-else.sql) |
+| `save_variables()` | Download `dim_explorer_variable` for a given schema, save some of the columns to Excel and format it for distribution |
 
