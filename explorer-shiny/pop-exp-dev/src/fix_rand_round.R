@@ -1,3 +1,4 @@
+# Peter Ellis, September 2017, based on method by Frances 
 
 #' Fixed random rounding
 #' 

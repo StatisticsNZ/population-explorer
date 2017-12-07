@@ -1,4 +1,3 @@
-
 # Building the Population Explorer database
 
 Peter Ellis, October 2017
@@ -25,4 +24,3 @@ See build.R for the sequence that things are built in.  Note that this script le
 * int - SQL scripts for creating the "intermediate" tables
 * one-offs - ad hoc useful scripts for things like inspecting the build log, identifying indexes, etc
 * . - SQL scripts for creating the pop_exp schema (or pop_exp_dev and pop_exp_test) and R scripts for running them all in sequence (ie similar function to what you'd normally do with make or a SQL Server specific tool).  
-

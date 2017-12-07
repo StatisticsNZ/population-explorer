@@ -53,4 +53,3 @@ There are also two subfolders of files:
 
 * `src` - this holds source code for the skeleton templates of SQL queries that are then modified by `server.R`; and also a few R functions used for random rounding and for formatting SQL on screen
 * `www` - this contains assets visible to the app's web page ie Cascading Style Sheets that make the headings orange and everything in the right font.
-

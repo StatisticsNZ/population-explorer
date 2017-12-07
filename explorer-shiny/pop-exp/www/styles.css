@@ -1,4 +1,15 @@
 
+.navbar-default .navbar-brand {
+    color:  rgb(236, 102, 8);
+    font-size: 250%;
+    font-weight: bold;
+  font-family: "Source Sans Pro", Times, serif;
+  
+}
+
+
+
+
 body {
   font-family: "Source Sans Pro", Times, serif;
 }
@@ -45,10 +56,12 @@ h1 {
   font-size: 200%;
   text-indent: 20px;
   background-color: rgb(236, 102, 8);
+  text-align: center;
 }
 
 h2 {
-  color: #222!important;
+  color: #222;
+  size: 115%;
   padding: 0;
   line-height: 1.1em;
   font-size: 1.20em;
@@ -60,6 +73,7 @@ h2 {
 
 
 h3 {
+  color: #706f6e;
   font-size: 109%;
   font-weight: bold;
 }

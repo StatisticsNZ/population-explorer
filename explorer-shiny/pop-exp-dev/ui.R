@@ -4,21 +4,57 @@ latest_year <- as.numeric(substring(Sys.Date(), 1, 4))
 # size of the "waiting" spinner
 twirly_size <- 1.5
 
-shinyUI(fluidPage(
+shinyUI(
+ 
+    
+  navbarPage(title = div(img(src="SNZlogo1.png", height = '42px', hspace ='30'), app_title),
+             position = c("fixed-top"), windowTitle = "Population Explorer",
+tabPanel("Welcome",
+         
+         # we can't use this image, it's just a placeholder
+         # original from https://www.westpac.co.nz/rednews/business/equity-crowdfunding-is-it-for-you/
+         img(src = "Westpac-Equity-Crowd-Banner.jpg", width = '2000px', height = "300px", 
+             title = "We can't use this image, we swiped it from Westpac!  Please give generously in the form of another image that we do have rights to use."),
+         
+         # this h1() call has to be before we use column() to concentrate text in the middle of the page, as we want the h1 banner
+         # to go the full width of the screen
+         h1("Welcome to the Population Explorer"),
+         
+         # column() is used to divide the screen into 12 grids; we don't want the full wide screen for just text as it's ugly to read
+         column(8, offset = 2,
+                
+                HTML(welcome_message)
+                
+                
+                
+                )
+         
+         
+),
+             
+                          
+tabPanel("Explore",                   
   tags$head(
-    tags$link(rel = "stylesheet", type = "text/css", href = "styles.css")
+    tags$link(rel = "stylesheet", type = "text/css", href = "styles.css"),
+    tags$link(rel = "stylesheet", type = "text/css", href = "prism.css"),
+    tags$style(type="text/css", "body {padding-top: 100px;}")
   ),
+  
+  
   tags$body(
-    div(img(src = 'SNZlogo1.png'), 
-        style="position:absolute;text-align: center;top:20px;right:15px;background-color:white;height:100px;width:180px")
-  ),
+    tags$script(src="prism.js")
+    ),
+
+  
+  # we need to run these to keep prism refreshing and doing its syntax highlighting thing each time
+  # there's new SQL for it to highlight:
+  prism_dependencies,
+  prism_sql_dependency,
   
   # we need Shinyjs for, amongst other things, the twirlies to work:
   useShinyjs(),
   
     
-  h1("Population Explorer prototype"),
-  
   sidebarLayout(
     sidebarPanel(
       conditionalPanel("input.tabs != 'Cohort modelling'",
@@ -40,13 +76,13 @@ shinyUI(fluidPage(
         conditionalPanel("input.tabs == 'Line charts' | input.tabs == 'Distribution' | input.tabs == 'Heatmap'",  
           selectInput("cont_var",
                        "Continuous variable",
-                       choices = variables[variables$var_type %in% c("continuous", "count"), "long_name"],
-                      selected = "Income all sources")
+                       choices = legit_cont_vars_list,
+                      selected = sample(legit_cont_vars$long_name, 1))
         ),
          selectInput("cross_var_a", 
                      "Categorical variable",
-                     choices = legit_cat_vars,
-                     selected = "Maori"),
+                     choices = legit_cat_vars_list,
+                     selected = sample(legit_cat_vars$long_name, 1)),
         conditionalPanel("input.tabs == 'Line charts' | input.tabs == 'Cross tabs'",
           uiOutput("cross_var_choice")
           ),
@@ -54,8 +90,8 @@ shinyUI(fluidPage(
         conditionalPanel("input.tabs == 'Heatmap'",
            selectInput("cont_var_b",
                        "Second continuous variable",
-                       choices = variables[variables$var_type %in% c("continuous", "count"), "long_name"],
-                       selected = "Value of ACC injury claims")
+                       choices = legit_cont_vars_list,
+                       selected = sample(legit_cat_vars$long_name, 1))
         ),
         
          
@@ -73,7 +109,7 @@ shinyUI(fluidPage(
         
         checkboxInput("cohort_yn", "Filter to just people born in a given time period?"),
         conditionalPanel("input.cohort_yn",
-          sliderInput("cohort_year", "Birth year", 1930, latest_year, value = c(1970, 1972), sep = "", step = 1)                       
+          sliderInput("cohort_year", "Birth year", 1930, latest_year - 1, value = c(1970, 1972), sep = "", step = 1)                       
                          
                          ),
         
@@ -81,11 +117,12 @@ shinyUI(fluidPage(
                             choices = filter(values, tolower(variable_short_name) == "days_nz")$value_short_name,
                             selected = filter(values, tolower(variable_short_name) == "days_nz")$value_short_name),
         
+        checkboxInput("resident", "Filter to just people estimated 'resident' on 30 June", value = TRUE),
         
         selectInput("filt_var",
                      "Other filter variable",
-                     choices = c("none", legit_cat_vars),
-                     selected = "Region most lived in"),
+                     choices = c("none", legit_cat_vars_list),
+                     selected = sample(legit_cat_vars$long_name, 1)),
            conditionalPanel("input.filt_var != 'none'", 
              uiOutput("filter_control")
            )
@@ -94,13 +131,10 @@ shinyUI(fluidPage(
           actionButton("action_cohort", "Update cohort analysis", icon("refresh")),
           selectInput("cohort_response",
                       "Response variable (continuous)",
-                      choices = variables[variables$var_type %in% c("continuous", "count") & 
-                                            variables$grain == "person-period" &
-                                            variables$short_name != "Age", 
-                                          "long_name"],
+                      choices = legit_cont_vars_list,
                       selected = "Income all sources"),
-          sliderInput("cohort_birth_year", "Cohort's birth year", 1930, latest_year, value = 1980, sep = "", step = 1),
-          sliderInput("cohort_year_1", "Year for explanatory data", 1990, latest_year - 1, value = 1990, sep = "", step = 1),
+          sliderInput("cohort_birth_year", "Cohort's birth year", 1930, latest_year, value = sample(1970:1990, 1), sep = "", step = 1),
+          sliderInput("cohort_year_1", "Year for explanatory data", 1990, latest_year - 1, value = sample(1991:2000, 1), sep = "", step = 1),
           sliderInput("cohort_year_2", "Year for response data", 1990, latest_year, value = 2015, sep = "", step = 1),
           htmlOutput("explain_cohort")
           
@@ -108,15 +142,17 @@ shinyUI(fluidPage(
       
       ),
     
+    #========================main panel=================================
     mainPanel(
       tabsetPanel(id = "tabs",
         tabPanel("Line charts",
           p(),
-          withSpinner(plotOutput("line_plot", height = "600px"), 
+          withSpinner(plotOutput("line_plot", height = img_ht), 
                       color = snz_brand["blue"], color.background = snz_brand["orange"], 
                       size = twirly_size, type = 3),
+          htmlOutput("explain_lines"),
           textOutput("message_lines"),
-          downloadButton("download_lines", "Download"),
+          uiOutput("download_button_lines"),
           radioButtons("line_precision", "Precision of rounded numbers", 
                        choices = c("Realistically approximate", "As precise as allowed"), inline = TRUE),
           p(),
@@ -127,10 +163,11 @@ shinyUI(fluidPage(
         ),
         tabPanel("Cross tabs",
           p(),
-          withSpinner(plotOutput("bar_plot", height = "600px"), 
+          withSpinner(plotOutput("bar_plot", height = img_ht), 
                       color = snz_brand["blue"], color.background = snz_brand["orange"], size = twirly_size, type = 3),
+          htmlOutput("explain_bars"),
           textOutput("message_bars"),
-          downloadButton("download_bars", "Download"),
+          uiOutput("download_button_bars"),
           radioButtons("bar_precision", "Precision of rounded numbers", 
                        choices = c("Realistically approximate", "As precise as allowed"), inline = TRUE),
           DT::dataTableOutput("bar_data"),
@@ -150,7 +187,7 @@ shinyUI(fluidPage(
           ),
         tabPanel("Heatmap",
             p(),
-            withSpinner(plotOutput("heatmap_plot", height = "600px"), 
+            withSpinner(plotOutput("heatmap_plot", height = img_ht), 
                         color = snz_brand["blue"], color.background = snz_brand["orange"], size = twirly_size, type = 3),
             textOutput("message_heatmap"),
             hr(),
@@ -160,7 +197,7 @@ shinyUI(fluidPage(
         tabPanel("Cohort modelling",
              p(),
              h3("Variables with some predictive power"),
-             withSpinner(plotOutput("ranger_plot", height = "600px"), 
+             withSpinner(plotOutput("ranger_plot", height = img_ht), 
                          color = snz_brand["blue"], color.background = snz_brand["orange"], 
                          size = twirly_size, type = 3),
              h3("Particular values of variables with some predictive power"),
@@ -169,13 +206,8 @@ shinyUI(fluidPage(
              actionButton("show_sql_cohort", "Hide/show SQL code"),
              htmlOutput("the_sql_cohort")
                  
-                 ),
-        tabPanel("Variables",
-            p("The variables used in this database, and their full descriptions, are listed below."),
-            DT::dataTableOutput("variables")     
-                 ),
-        tabPanel("Disclaimer",
-            HTML(full_disclaimer))
+                 )
+        
         ),
         hr(),
         p("Access to the data presented was managed by Statistics New Zealand under strict
@@ -187,7 +219,29 @@ Statistics NZ. ")
     )
     
   
+),
+tabPanel("Variables",
+         h1("The variables used in this database and their full descriptions"),
+         DT::dataTableOutput("variables")     
+),
+tabPanel("Disclaimer",
+         h1("Disclaimer"),
+         column(6, offset = 3,
+          HTML(full_disclaimer))
+  ),
+tabPanel("FAQ",
+         h1("Frequently Asked questions"),
+         column(6, offset = 3,
+                HTML(faq))
+),
+tabPanel("Credits",
+         h1("Credits"),
+         column(6, offset = 3,
+                HTML(credits),
+                DT::dataTableOutput("shoulders")
+                
+                )
+         )
 )
-)
-    
+)    
   

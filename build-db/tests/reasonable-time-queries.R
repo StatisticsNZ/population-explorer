@@ -1,7 +1,8 @@
-
+# runs all the scripts with a name sample-query and compares them to some arbitrary "reasonable time" benchmarks
+# Peter Ellis NOvember 2017
 
 fns <- list.files(path = "tests/sql/", pattern = "^sample-query")
-expected_times <- c(30, 10)
+expected_times <- c(30, 10, 30, 15) # these are a bit of a judgement call!
 
 for(i in 1:length(fns)){
   filename <- paste0("tests/sql/", fns[i])
@@ -16,7 +17,7 @@ for(i in 1:length(fns)){
   })
   
   if(st[3] > expected_times[i]){
-    stop(paste("It took more than", expected_times[i], "seconds to do a query that should be quicker than that"))
+    warning(paste("It took", st[3], "which is more than the expected", expected_times[i], "seconds to do a query that should be quicker than that"))
   }
   
   message(paste("Passed reasonable length of", fns[i]))

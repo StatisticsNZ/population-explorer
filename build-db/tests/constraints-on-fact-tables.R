@@ -1,7 +1,7 @@
 
 
 tmp <- all_foreign_keys %>%
-  filter(table_name == "fact_rollup_year") %>%
+  dplyr::filter(table_name == "fact_rollup_year") %>%
   left_join(data_frame(key_name = paste0("fk_y", 1:4)), by = "key_name")
 
 if(nrow(tmp) != 4){

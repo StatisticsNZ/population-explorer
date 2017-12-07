@@ -31,7 +31,7 @@ CREATE PROCEDURE build_tables AS
 BEGIN
 SET NOCOUNT ON
 	-- all tables that have an snz_uid column:
-	SELECT 
+	SELECT DISTINCT
 		t.table_schema,
 		t.table_name
 	INTO #tables
@@ -40,9 +40,11 @@ SET NOCOUNT ON
 	ON t.table_name = c.table_name AND 
 		t.table_schema = c.table_schema
 	WHERE t.table_type = 'BASE TABLE' AND
-		 NOT t.table_schema in('dbo', 'adhoc_clean', 'metadata', 'utility') AND
+		 NOT t.table_schema in('adhoc_clean', 'metadata', 'utility') AND
 		 t.table_name <> 'personal_detail' AND
-		 c.column_name = 'snz_uid';
+		 (c.column_name = 'snz_uid') AND
+		 t.table_name NOT LIKE '%20%'
+
 
 	-- add an id column with the row number, which we will use to cycle through them all:
 	ALTER TABLE #tables ADD id INT IDENTITY;
@@ -57,7 +59,7 @@ SET NOCOUNT ON
 		SET @schema = (SELECT table_schema FROM #tables WHERE id = @i);
 		SET @tab = (SELECT table_name FROM #tables WHERE id = @i);
 
-		EXECUTE data.copy_sample @schema = @schema, @tab = @tab;
+		EXECUTE dbo.copy_sample @schema = @schema, @tab = @tab;
 		SET @i = @i + 1
 	END
 END

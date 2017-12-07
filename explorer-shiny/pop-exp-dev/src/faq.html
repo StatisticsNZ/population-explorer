@@ -1,0 +1,27 @@
+
+
+<h2>Inference to broader populations</h2>
+<h3>Why do you restrict it to just the spine?  That means some data goes missing.</h3>
+<p>
+  We wanted this tool to help explore specifically the data that is linked across datasets, to get a complete picture of those people for whom we have reasonably reliable data.  The only safe way to do this and avoid double-counting people is to drop people who have not been linked to the spine.  Yes, this means that for any specific dataset we have filtered out a range of data.  We have crude estimates of the linkage rates for each variable under the "variable"" tab; these represent the minimum linkage rate of the tables that were used in creating the particular variable. <em>This needs to be carefully taken into account in any inference - there are missing linkages that have not been corrected for.</em>
+</p>
+<p>
+  If you want to analyse a particular dataset as fully as possible eg ACC Claims so you can see all ACC Claims not just those linked to the spine, you need to go back to the original IDI data, which of course has it all there.
+  
+</p>
+
+
+<h3>Why don't you restrict it to just the estimated resident population in any year?</h3>
+
+<p>
+  We have made the estimated resident population ("IDI-ERP") the default, but have included data from others.  This lets us go back further than the current estimated resident population table, and also lets people consider alternative versions (for, example filtering by a particular number of days spent in New Zealand and activity from a particular admin data source).
+</p>
+
+<h2>Tools, technology and definitions</h2>
+<h3>Where can I see the source code?</h3>
+<p>
+  The source code to build the database (`build-db`) and for this front end web application (`explorer-shiny`) is <a href = 'https://github.com/StatisticsNZ/population-explorer'>available on GitHub</a>.  Note that typically this is some weeks behind the latest version being developed in Stats NZ.
+</p>
+<p>
+  The code to define particular variables (eg income, mental health, etc) is in the `./build-db/fact-years/` sub-directory.
+</p>

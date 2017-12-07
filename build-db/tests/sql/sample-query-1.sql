@@ -12,8 +12,8 @@ SELECT
   year_nbr
 FROM
   (SELECT 
-    SUM(seed) - FLOOR(SUM(seed)) AS sum_seed,
-    SUM(a.income + (ROUND(seed, 0) * 0.2 - 0.1) * a.income)  AS perturbed_total,
+    SUM(b.seed) - FLOOR(SUM(b.seed)) AS sum_seed,
+    SUM(a.income + (ROUND(b.seed, 0) * 0.2 - 0.1) * a.income)  AS perturbed_total,
     count(1) AS freq,
     a.sex_code,
     a.maori_code,
@@ -23,7 +23,7 @@ FROM
     ON a.snz_uid = b.snz_uid
   --WHERE days_nz > 120
   GROUP BY a.sex_code, a.maori_code, a.year_nbr) AS c
-LEFT JOIN IDI_Sandpit.pop_exp_test.dim_explorer_value AS d
+LEFT JOIN IDI_Sandpit.pop_exp_test.dim_explorer_value_year AS d
   ON c.sex_code = d.value_code
-LEFT JOIN IDI_Sandpit.pop_exp_test.dim_explorer_value AS e
+LEFT JOIN IDI_Sandpit.pop_exp_test.dim_explorer_value_year AS e
   ON c.maori_code = e.value_code

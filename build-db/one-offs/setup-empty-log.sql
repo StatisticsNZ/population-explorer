@@ -15,7 +15,11 @@ CREATE TABLE IDI_Sandpit.dbo.pop_exp_build_log
 	script_name VARCHAR(1000),
 	batch_number INT,
 	result CHAR(30),
-	err_mess VARCHAR(8000)
+	err_mess VARCHAR(8000),
+	duration NUMERIC(18, 2)
 );
 -- Obviously start_time and end_time should be DATETIME but it was too much bother to get R to write correctly to that format, so settling with character.
 -- Good enough for a log.
+
+
+

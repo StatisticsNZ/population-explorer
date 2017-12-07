@@ -3,132 +3,76 @@
 # then that script, and so on).  It also means we can run it overnight by starting the job on the R server and leaving
 # it running even when we have to log off the network and take our client Surface Pro home
 
-# we assume that the scripts in /src/ have already been run and hence the stored procedures
-# in the lib schema already exist TODO - why not add that in to here?
-
 # There are two main things that trip us up in running this:
-# * if a script has syntactically correct SQL but returns an error from the data eg "ambiguous column", it does not 
-#   return an error.
+# * if a script has syntactically correct SQL but returns an error from the data it does not return an error.
 # * if a script has a SELECT ... statement that returns a table of data and doesn't insert it anywhere, the rest
 #   of the script is not executed.
 
-# Peter Ellis 30-31 October 2017
-
-# change this to build_derived <- TRUE if you want to build all the original intermediate tables too (takes many hours)
-build_intermediate <- FALSE
-target_schema <- "pop_exp_test"
+# Peter Ellis 30-31 October 2017 and extensively revised and added to since
 
 
-source("src/sql_execute.R")
-source("src/save-variables-as-csv.R")
+# parameters for this build: 
+create_procedures     <- FALSE                      # Set to FALSE if you're worried about mucking up other people using those procedures
+build_intermediate    <- FALSE                      # set to FALSE if you're fine with using the existing version of the intermediate tables
+build_quarterly       <- TRUE             
+target_schema         <- "pop_exp_charlie"                  # can be pop_exp_alpha, pop_exp_bravo, pop_exp_charlie, pop_exp_dev or pop_exp_sample
+source_schema         <- "IDI_Clean"                # can be IDI_Clean (very slow eg 40 hours) or IDI_Sample (15 minutes)
+target_schema_int     <- "intermediate_sample"      # can be intermediate or intermediate_sample
+spine_to_sample_ratio <- 1                         # can be any number.  1 means full spine is used; 10 means one tenth
 
+# set up database connection:
 odbcCloseAll()
 idi = odbcDriverConnect("Driver=ODBC Driver 11 for SQL Server; 
                         Trusted_Connection=YES; 
                         Server=WTSTSQL35.stats.govt.nz,60000")
 
 
-#-------------build the very first "permanent seed" table----------------------
-# This is the very first table needed in a completely clean build
-
-if(build_intermediate){
-  message("Building the permanent seeds, and the parents table, in the 'intermediate' schema")
-  res <- sql_execute(channel = idi, filename = "int-tables/00-permanent_seed.sql")
-  res <- sql_execute(channel = idi, filename = "int-tables/00-parents.sql")
+#-----------------------create stored procedures------------------
+if(create_procedures){
+  sql_execute_all("00-src")
 }
 
-#----------------clear the decks, and build just the dimension tables-------------
-scripts <- list.files(pattern = "\\.sql$")
-scripts <- scripts[scripts < "05"] 
-
-system.time({
-  for(j in 1:length(scripts)){
-    message(paste("Executing", scripts[j], Sys.time()))
-    res <- sql_execute(channel  = idi, 
-                filename = scripts[j], 
-                sub_in   = "pop_exp_dev", 
-                sub_out  = target_schema,
-                fixed    = TRUE)
-  }
-})
-
-sql <- paste0("SELECT COUNT(1) AS n FROM IDI_Sandpit.", target_schema, ".dim_person")
-test_people <- sqlQuery(idi, sql)
-if(test_people$n < 9000000){
-  stop("Less than 9 million people in the person dimension table, so quitting until you fix it.")
-}
 
 #-----------------------build the tables in the `intermediate` schema------------------
-# some of these scripts actually depend on the dimension tables being set up first eg dim_date,
-# hence need to run the previous chunk before you get to here if you're doing a clean build
+# some of these scripts depend on pop_exp_dev.dim_date being in existence, hence need to run 
+# that script (./build-db/02-setup/03-create-dim_date.sql) manually in Management Studio if doing a 
+# clean build from nothing.
 
 if(build_intermediate){
-  # all the intermediate tables scripts:
-  scripts <- paste0("int-tables/", list.files("int-tables", pattern = "\\.sql$"))
-  
-  # exclude those that begin with "00" as they should have 
-  scripts <- scripts[scripts >= "int-tables/01"]
-  
-  system.time({
-    for(j in 1:length(scripts)){
-      message(paste("Executing", scripts[j], Sys.time()))
-      res <- sql_execute(channel  = idi, 
-                  filename = scripts[j], 
-                  sub_in   = "pop_exp_dev", 
-                  sub_out  = target_schema,
-                  fixed    = TRUE,
-                  error_action = "continue")
-    }
-  })  
+    sql_execute_all("01-int-tables", type = "intermediate", error_action = "continue")
 }
+
 
 # should do some checks here that all the intermediate tables with snz_uid in them
 # are limited to the spine - a common problem being that they have gotten confused
 # with the old snz_uid from the last refresh.
 
-#-----------------------build the tables in the [pop_exp_XXX] schema-----------------
-odbcCloseAll()
-idi = odbcDriverConnect("Driver=ODBC Driver 11 for SQL Server; 
-                        Trusted_Connection=YES; 
-                        Server=WTSTSQL35.stats.govt.nz,60000")
 
 
-scripts <- list.files(pattern = "\\.sql$")
-scripts <- scripts[scripts >= "05" & scripts < "60"] 
+#----------------clear the decks, and build just the dimension tables-------------
+sql_execute_all("02-setup")
 
-system.time({
-  for(j in 1:length(scripts)){
-    message(paste("Executing", scripts[j], Sys.time()))
-    res <- sql_execute(channel  = idi, 
-                filename = scripts[j], 
-                sub_in   = "pop_exp_dev", 
-                sub_out  = target_schema,
-                fixed    = TRUE,
-                error_action = "continue")
-    if(class(res) == "data.frame"){
-      warning(paste(scripts[j], "returned a data.frame.  That's a bad sign it might not have finished what it was meant to do."))
-    }
-  }
-})
+# test that we got the right number of people
 
-message(paste("Finished adding variables", Sys.time()))
+test_people <- sqlQuery(idi, paste0("SELECT COUNT(1) AS n FROM IDI_Sandpit.", target_schema, ".dim_person"))
+if((test_people$n < 9000000 / spine_to_sample_ratio && source_schema != "IDI_Sample") 
+   || (test_people$n != 100000 / spine_to_sample_ratio && source_schema == "IDI_Sample")){
+  stop("Less than expected number of people in the person dimension table, so quitting until you fix it.")
+}
 
-# check how many rows we have per variable before we go on
-sql <- paste0(
-  "SELECT COUNT(1) AS observations, fk_variable_code, variable_code, short_name
-  FROM IDI_Sandpit.", target_schema, ".fact_rollup_year AS a
-  RIGHT JOIN IDI_Sandpit.", target_schema, ".dim_explorer_variable AS b
-  ON a.fk_variable_code = b.variable_code
-  WHERE grain = 'person-period'
-  group by fk_variable_code, short_name, variable_code
-  order by variable_code DESC;"
-  )
 
-nrows <- sqlQuery(idi, sql)
-if(min(nrows$observations) < 1000){
+#-----------------------add the data to the fact table in the [pop_exp_XXX] schema-----------------
+sql_execute_all("03-year-facts")
+
+message(paste("Finished adding annual variables", Sys.time()))
+
+
+nrows <- sql_execute(idi, "tests/sql/variable-observation-counts.sql")
+if(min(nrows$observations) < 1000 / spine_to_sample_ratio){
   print(nrows)
   stop("At least one variable had less than 1000 observations.")
 }
+
 # Note if this has happened, which indicates one of the variable-adding scripts in the build has failed silently, 
 # most likely there is a SELECT statement in the SQL script, left in by us as a "let's check what this looks like", 
 # that returns some table.  That seems to confuse odbcQuery, it stops when it gets to that point.  So we need to 
@@ -139,29 +83,34 @@ if(min(nrows$observations) < 1000){
 # in the .sql files at it makes them fail silently when run in this process.
 # it seems ok if such statements are at the *end* of the .sql script.
 
-# save a CSV version of the variables:
-save_variables(target_schema)
-
 #-----------------------do the indexing and pivoting to make it ready for the Shiny app and analysis-----------------
-odbcCloseAll()
-idi = odbcDriverConnect("Driver=ODBC Driver 11 for SQL Server; 
-                        Trusted_Connection=YES; 
-                        Server=WTSTSQL35.stats.govt.nz,60000")
+# sql_execute_all("04-year-pivot", upto = "72c", error_action = "continue")
+sql_execute_all("04-year-pivot")
+# inspect progress by looking at dim_explorer_variable.loaded_into_wide_table, which is populated as we go
 
+# script 74 takes a long long time to add in the columns of the wide table and the system often goes down with it 
+# incomplete.  So the next section is setup so you can run from here if that situation arises:
 
-scripts <- list.files(pattern = "\\.sql$")
-scripts <- scripts[scripts >= "60"] 
-
-system.time({
+unloaded <- sqlQuery(idi, paste0("SELECT * FROM IDI_Sandpit.", target_schema, 
+                                 ".dim_explorer_variable WHERE loaded_into_wide_table IS NULL AND use_in_front_end = 'use'"),
+                     stringsAsFactors = FALSE)
+if(nrow(unloaded) > 0){
+  message(paste("Loading the remaining", nrow(unloaded), "of columns of the wide table that missed out when system went down."))
+  print(unloaded$short_name)
+  scripts <- paste0("04-year-pivot/", list.files("04-year-pivot", pattern = "\\.sql$"))
+  scripts <- scripts[scripts >= "04-year-pivot/74"]
   for(j in 1:length(scripts)){
     message(paste("Executing", scripts[j], Sys.time()))
+    
     res <- sql_execute(channel  = idi, 
-                filename = scripts[j], 
-                sub_in   = "pop_exp_dev", 
-                sub_out  = target_schema,
-                fixed    = TRUE)
+                       filename = scripts[j], 
+                       sub_in   = "pop_exp_dev", 
+                       sub_out  = target_schema,
+                       fixed    = TRUE,
+                       source_schema = source_schema)
   }
-})
+  
+}
 
 message(paste("Finished build", Sys.time()))
 
@@ -169,6 +118,11 @@ message(paste("Finished build", Sys.time()))
 test_schema <- target_schema
 source("tests/all-tests.R")
 
-# save a CSV version of the variables:
-save_variables(target_schema)
+# save Excel version of the variables (is wrapped in `try` in case someone else has it open, in which
+# case it will *not* save the variables):
+try(save_variables(target_schema))
 
+#-------------------------quarterly version----------------------
+if(build_quarterly){
+  sql_execute_all("06-qtr-facts")
+}

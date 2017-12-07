@@ -11,6 +11,6 @@ FROM
   FROM  IDI_Sandpit.pop_exp_test.vw_year_wide AS a
   INNER JOIN (SELECT snz_uid, seed FROM IDI_Sandpit.pop_exp_test.dim_person) AS b
     ON a.snz_uid = b.snz_uid
-  WHERE seed > 0.5 AND benefits!= 0 AND acc_claims != 0) AS c
-INNER JOIN IDI_Sandpit.pop_exp_test.dim_explorer_value AS d
+  WHERE b.seed > 0.5 AND benefits!= 0 AND acc_claims != 0) AS c
+INNER JOIN IDI_Sandpit.pop_exp_test.dim_explorer_value_year AS d
   ON c.age_code = d.value_code;

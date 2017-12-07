@@ -1,10 +1,7 @@
 # Runs all the tests in this folder
 # Peter Ellis, 10 November 2017
 
-library(RODBC)
-library(dplyr)
 
-source("src/sql_execute.r")
 if(is.null(test_schema)){
   test_schema <- "pop_exp"
 }
@@ -49,3 +46,12 @@ source("tests/check-values-invw-ye-table.R")
 
 # Run some sample queries that should execute in a reasonable time
 source("tests/reasonable-time-queries.R")
+
+# We have a manually compiled list of minimum variables
+source("tests/should-have-variables.R")
+
+# We have 25 or more variables:
+source("tests/minimum-number-variables.R")
+
+# All variables except 3 should have a _code column in the wide 'view'
+source("tests/all-variables-have-columns.R")

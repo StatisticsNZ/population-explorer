@@ -1,0 +1,6 @@
+schema, spine_to_sample_ratio, date_built, status 
+test, 1, 18 November, ok but dated and bad variables
+bak, 1, 26 November, very slow no seed in view 
+alpha, 50, 29 November, complete
+bravo, 10, 29 November, complete
+charlie 1 29 November, building

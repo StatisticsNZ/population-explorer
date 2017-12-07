@@ -6,10 +6,6 @@
 #
 # Peter Ellis, 3 August 2017
 
-library(ggplot2)
-library(scales)
-
-
 #==================set up typeface family=====================
 # this next line needs to point to somewhere that holds all the .otf files for SourceSansPro.
 # These can be downloaded from https://www.fontsquirrel.com/fonts/source-sans-pro

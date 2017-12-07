@@ -43,8 +43,9 @@ SET NOCOUNT ON
 	ON t.table_name = with_snz_uid.table_name AND 
 		t.table_schema = with_snz_uid.table_schema
 	WHERE with_snz_uid.TABLE_NAME IS NULL AND
-		NOT t.table_schema in('dbo', 'adhoc_clean', 'metadata', 'utility', 'security') AND
-		t.table_type = 'BASE TABLE'
+		NOT t.table_schema in('adhoc_clean', 'metadata', 'utility', 'security') AND
+		t.table_type = 'BASE TABLE' AND
+		 t.table_name NOT LIKE '%20%'
 	ORDER BY table_schema;
 
 	ALTER TABLE #problem_tables ADD id INT IDENTITY;

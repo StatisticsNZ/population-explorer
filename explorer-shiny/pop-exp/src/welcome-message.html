@@ -1,0 +1,29 @@
+<p>
+  This tool lets you explore a range of "rolled up" variables stored in the <code class='language-sql'>IDI_RnD.pop_exp</code> schema on the <code class = 'language-sql'>WPRDSQL36\iLEED</code> database server in the Data Lab.  Each analysis you run generates formatted and commented SQL code that you can use in your own analysis; or you can download Excel files or copy the PNG images of graphics for output release.  The database was built on DATEBUILT from the IDI 'refresh' that was current at that time.
+</p>
+
+<p>SAMPLERATIO</p>
+
+<ul>
+  <li>Choose the "Explore" option from the title bar and play around with the five different types of exploratory analysis we allow</li>
+  <li>Choose the "Variables" option to see the variables we've included so far, and please make suggestions for improvements.</li>
+</ul>
+
+<p>
+  Please send suggestions to <a href = 'mailto:Access2Microdata-SharedMailbox@stats.govt.nz'>access2microdata@stats.govt.nz</a>.  Be very, very careful how you use this.  Read the disclaimer carefully, and the definitions of variables we've chosen even more carefully.  </p>
+
+<p>
+  No, we really mean it.  These aren't official statistics.  
+</p>
+
+<ul>
+  <li>They under-represent all sorts of things, not least because we can't link all data fully</li>
+  <li>We need your help in developing better variables</li>
+  <li>And so on</li>
+</ul>
+
+<p>The source code for the database and for this front end tool is <a href='https://github.com/StatisticsNZ/population-explorer'>available on GitHub</a>.</p>
+
+<p>Most of the data in the IDI is in the form of events (such as “person X purchased pharmaceutical Y on 17 June 2012”) and spells (such as “person A attended the year at school B from 12 February to 17 November 2012). A significant part of researcher time in any analysis involving the IDI is “rolling up” such events-based data into regular observations (eg quarterly or annual) of standard variables, such as “number and value of pharmaceutical purchases per year”. Typically this involves developing familiarity with the most standard way of preparing variables that the researcher has only a secondary interest in (for example, as variables to “control” for in a statistical model attempting to understand the impact of a variable that is of primary interest to the researcher).</p>
+
+<p>The fundamental idea of the Population Explorer is to perform this "roll up" for around 20 to 50 variables, at annual and (if possible) quarterly intervals, so researchers who are already in the Data Lab can save many days of work. This version of the data, which we describe as the Population Explorer Datamart, will be available as one or more schemas on the database server in the Data Lab. This datamart would be available to IDI researchers in the Data Lab; exactly under what process and conditions is being worked through.</p>

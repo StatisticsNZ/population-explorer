@@ -1,5 +1,6 @@
 # Function for taking various output from the cohort modelling 
 # Random Forest and elastic net regularisation models
+# Peter Ellis early November 2017
 
 explain_cohort <- function(response, n, birth_year, year_1, year_2, 
                            ranger_model, ranger_gof, elr_model, elr_gof,
