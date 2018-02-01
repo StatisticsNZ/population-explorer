@@ -20,5 +20,5 @@ for(i in 1:length(fns)){
     warning(paste("It took", st[3], "which is more than the expected", expected_times[i], "seconds to do a query that should be quicker than that"))
   }
   
-  message(paste("Passed reasonable length of", fns[i]))
+  print(paste("Passed reasonable length of", fns[i]))
 }

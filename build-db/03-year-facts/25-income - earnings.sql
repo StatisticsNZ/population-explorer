@@ -58,12 +58,13 @@ INSERT INTO IDI_Sandpit.pop_exp_dev.dim_explorer_variable
 		'From the income source codes C00,C01,C02,P00,P01,P02,S00,S01,S02 (which are self-employed income), 
 		  and W&S, PEN, BEN, CLM, PPL which are wages and salaries, pensions, benefits, claimants compensation,
 		  paid parental leave.  Rent and student loans are excluded for consistency with the definition applied 
-		  by Labour market publications from Stats NZ.',
+		  by Labour market publications from Stats NZ.  Currently shows 
+		the tax year (year ending March) for subsequent to the recorded calendar year ie the data for year ending March 2013 is recorded here against 2012.',
 		  'How much active (?) income did the person receive each time period?',
 		'IDI_Clean.data.income_tax_yr',
 		 (SELECT CONVERT(date, GETDATE())),
 		 'Income and employment',
-		 'NUMERIC(15)');
+		 'INT'); -- alternative data type could be NUMERIC(15,2), if the fact table has been defined to allow them
 
 -- grab back from the table the code for our newly added variable
 DECLARE @var_code INT;	 
@@ -122,14 +123,15 @@ FROM
 		(SELECT 
 			i.snz_uid                           AS fk_snz_uid,
 			SUM(inc_tax_yr_tot_yr_amt)		    AS value,
-			inc_tax_yr_year_nbr			        AS year_nbr		
+			inc_tax_yr_year_nbr 		        AS year_nbr		
 		FROM 
 			IDI_Clean.data.income_tax_yr AS i
 			-- we only want people in our dimension table:
 		INNER JOIN IDI_Sandpit.pop_exp_dev.dim_person AS s
 			ON i.snz_uid = s.snz_uid
-		WHERE inc_tax_yr_income_source_code in ('C00','C01','C02','P00','P01','P02','S00','S01','S02', 
-													'W&S', 'PEN', 'BEN', 'CLM', 'PPL')
+		WHERE inc_tax_yr_income_source_code IN ('C00','C01','C02','P00','P01','P02','S00','S01','S02', 
+													'W&S', 'PEN', 'BEN', 'CLM', 'PPL') AND
+				inc_tax_yr_tot_yr_amt > -2000000000
 		GROUP BY i.snz_uid, inc_tax_yr_year_nbr) AS a
 		) AS with_cats
 	-- we want to covert the categories back from categories to codes

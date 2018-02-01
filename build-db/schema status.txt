@@ -1,0 +1,8 @@
+schema, spine_to_sample_ratio, date_built, status 
+sample, 100, 4 December, complete
+alpha, 40, 29 November, complete
+bravo, 10, 29 November, complete
+charlie 1 1 December, complete
+alpha, 30, 11 December, complete
+charlie 25, 12 December, complete
+bravo, 20, 14 December, complete

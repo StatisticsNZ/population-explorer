@@ -1,0 +1,1 @@
+This folder holds pipe-delimited text files of four key tables comprising the synthetic version of the Population Explorer datamart.

@@ -9,4 +9,4 @@ if(length(missing_vars) > 1){
   stop(paste("we should have", paste(missing_vars, collapse = " and "), "but they have gone missing"))
 }
 
-message("Passed test of all expected variables turned up")
+print("Passed test of a bunch of known, named variables turned up")

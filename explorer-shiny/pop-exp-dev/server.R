@@ -121,7 +121,7 @@ shinyServer(function(input, output, session) {
       checkboxGroupInput("filt_val",
                 "Values to filter to",
                 choices = v$value_short_name,
-                selected = sample(v$value_short_name, sample(1:nrow(v), 1)))
+                selected = sample(v$value_short_name, sample(1:min(3, nrow(v)), 1)))
     }
   })
   
@@ -139,7 +139,8 @@ shinyServer(function(input, output, session) {
     selectInput("cross_var_b", 
                 "Second categorical variable",
                 choices = choices,
-                selected = "Sex")
+                selected = "Sex",
+                selectize = FALSE)
   })
   
   output$download_button_lines <- renderUI({
@@ -205,8 +206,8 @@ shinyServer(function(input, output, session) {
       if(class(data_orig_lines()) != "character"){
         data_orig_lines() %>%
           mutate(people = fix_rand_round(freq, sum_seed) * spine_to_sample_ratio,
-                 people = ifelse(freq < sup_val, NA, people)) %>%
-          mutate(avg_value = signif(perturbed_total / people, 3)) %>%
+                 people = ifelse(freq < sup_val, sup_repl, people)) %>%
+          mutate(avg_value = signif(perturbed_total * spine_to_sample_ratio / people, 3)) %>%
           mutate(people = ifelse(freq < sup_val, sup_repl, people),
                  avg_value = ifelse(freq < sup_val, sup_repl, avg_value)) %>%
           mutate(var_1 = fct_reorder(var_1, var_1_sequence)) %>%
@@ -285,13 +286,46 @@ shinyServer(function(input, output, session) {
         days_nz     = input$days_nz,
         filt_var    = input$filt_var,
         filt_val    = input$filt_val,
-        year        = input$year
+        year        = input$year,
+        cohort_yn   = input$cohort_yn,
+        cohort_year = input$cohort_year
         
       )
     )
   })
        
-  output$line_plot <- renderPlot({p_lines()})
+  
+  
+  output$line_plot <- renderImage({
+    # This could be done with just renderPlot() but that doesn't work for fonts.
+    # See https://stackoverflow.com/questions/31859911/r-shiny-server-not-rendering-correct-ggplot-font-family
+    # So unfortunately we need all this palava
+    
+    # Read myImage's width and height. These are reactive values, so this
+    # expression will re-run whenever they change.
+    width  <- session$clientData$output_line_plot_width
+    height <- session$clientData$output_line_plot_height
+    
+    # For high-res displays, this will be greater than 1
+    pixelratio <- session$clientData$pixelratio
+    
+    # A temp file to save the output.
+    outfile <- tempfile(fileext='.png')
+    
+    # Generate the image file
+    png(outfile, width = width * pixelratio, height = height * pixelratio,
+        res = res * pixelratio)
+      print(p_lines())
+    dev.off()
+    
+    # Return a list containing the filename
+    list(src = outfile,
+         width = width,
+         height = height,
+         alt = "Select 'Update line chart data' (top left of screen) to download data and get a chart.")
+  }, deleteFile = TRUE) # delete the temp file when finished
+  
+  
   output$line_data <- DT::renderDataTable(data_line_table(), rownames = FALSE)
   output$the_sql_lines <- renderUI(format_sql(the_sql_lines()))
   output$explain_lines <- renderText({explanatory_text_lines()})
@@ -417,12 +451,43 @@ shinyServer(function(input, output, session) {
         days_nz     = input$days_nz,
         filt_var    = input$filt_var,
         filt_val    = input$filt_val,
-        year        = input$year
+        year        = input$year,
+        cohort_yn   = input$cohort_yn,
+        cohort_year = input$cohort_year
       )
     )
   })
   
-  output$bar_plot <- renderPlot({p_bars()})
+  output$bar_plot <- renderImage({
+    # This could be done with just renderPlot() but that doesn't work for fonts.
+    # See https://stackoverflow.com/questions/31859911/r-shiny-server-not-rendering-correct-ggplot-font-family
+    # So unfortunately we need all this palava
+    
+    # Read myImage's width and height. These are reactive values, so this
+    # expression will re-run whenever they change.
+    width  <- session$clientData$output_bar_plot_width
+    height <- session$clientData$output_bar_plot_height
+    
+    # For high-res displays, this will be greater than 1
+    pixelratio <- session$clientData$pixelratio
+    
+    # A temp file to save the output.
+    outfile <- tempfile(fileext='.png')
+    
+    # Generate the image file
+    png(outfile, width = width * pixelratio, height = height * pixelratio,
+        res = res * pixelratio)
+    print(p_bars())
+    dev.off()
+    
+    # Return a list containing the filename
+    list(src = outfile,
+         width = width,
+         height = height,
+         alt = "Select 'Update cross tab data' (top left of screen) to download data and get a chart.")
+  }, deleteFile = TRUE) # delete the temp file when finished
+  
+  
   output$bar_data <- DT::renderDataTable({data_bars_table()}, rownames = FALSE)
   output$the_sql_bars <- renderUI(format_sql(the_sql_bars()))
   output$explain_bars <- renderText({explanatory_text_bars()})
@@ -517,7 +582,39 @@ shinyServer(function(input, output, session) {
     
   })
     
-    output$density_plot <- renderPlot({p_density()})
+ 
+    
+    output$density_plot <- renderImage({
+      # This could be done with just renderPlot() but that doesn't work for fonts.
+      # See https://stackoverflow.com/questions/31859911/r-shiny-server-not-rendering-correct-ggplot-font-family
+      # So unfortunately we need all this palava
+      
+      # Read myImage's width and height. These are reactive values, so this
+      # expression will re-run whenever they change.
+      width  <- session$clientData$output_density_plot_width
+      height <- session$clientData$output_density_plot_height
+      
+      # For high-res displays, this will be greater than 1
+      pixelratio <- session$clientData$pixelratio
+      
+      # A temp file to save the output.
+      outfile <- tempfile(fileext='.png')
+      
+      # Generate the image file
+      png(outfile, width = width * pixelratio, height = height * pixelratio,
+          res = res * pixelratio)
+      print(p_density())
+      dev.off()
+      
+      # Return a list containing the filename
+      list(src = outfile,
+           width = width,
+           height = height,
+           alt = "Select 'Update distribution data' (top left of screen) to download data and get a chart.")
+    }, deleteFile = TRUE) # delete the temp file when finished
+    
+    
+    
     output$the_sql_density <- renderUI(format_sql(the_sql_dens()))
 
     
@@ -608,7 +705,36 @@ shinyServer(function(input, output, session) {
       return(p)
     })
     
-    output$heatmap_plot <- renderPlot({p_heatmap()})
+    output$heatmap_plot <- renderImage({
+      # This could be done with just renderPlot() but that doesn't work for fonts.
+      # See https://stackoverflow.com/questions/31859911/r-shiny-server-not-rendering-correct-ggplot-font-family
+      # So unfortunately we need all this palava
+      
+      # Read myImage's width and height. These are reactive values, so this
+      # expression will re-run whenever they change.
+      width  <- session$clientData$output_heatmap_plot_width
+      height <- session$clientData$output_heatmap_plot_height
+      
+      # For high-res displays, this will be greater than 1
+      pixelratio <- session$clientData$pixelratio
+      
+      # A temp file to save the output.
+      outfile <- tempfile(fileext='.png')
+      
+      # Generate the image file
+      png(outfile, width = width * pixelratio, height = height * pixelratio,
+          res = res * pixelratio)
+      print(p_heatmap())
+      dev.off()
+      
+      # Return a list containing the filename
+      list(src = outfile,
+           width = width,
+           height = height,
+           alt = "Select 'Update heatmap data' (top left of screen) to download data and get a chart.")
+    }, deleteFile = TRUE) # delete the temp file when finished
+    
+    
     
     output$the_sql_heatmap <- renderUI(format_sql(the_sql_heatmap()))
     
@@ -676,7 +802,7 @@ shinyServer(function(input, output, session) {
         # we need a lower case version of the variables data frame for matching
         # with the lower case variable names that were in the column names of the wide view.
         vars2 <- variables[ , c("short_name", "long_name")]
-        vars2$short_name <- tolower(vars2$short_name)
+        vars2$short_name <- remove_macron(tolower(vars2$short_name))
         
         # extract the "importance" of the explanatory variables
         imp <- tidy(importance(model_rf))  %>%
@@ -712,11 +838,8 @@ shinyServer(function(input, output, session) {
                                         " that are helpful for predicting ", input$cohort_response,
                                         " at age ",  input$cohort_year_2 - input$cohort_birth_year),
                                  70)
-      lollipop_col <- snz_graph_colour[2]
+        lollipop_col <- snz_graph_colour[2]
       
-
-      
-
         ranger_model()$imp_limited %>%
           ggplot(aes(x = x, y = variable, label = str_wrap(long_name, 40))) +
           geom_segment(xend = 0, aes(yend = variable), size = 1.5,
@@ -778,7 +901,37 @@ shinyServer(function(input, output, session) {
       })
     })
 
-    output$ranger_plot <- renderPlot({ranger_plot()})
+    output$ranger_plot <- renderImage({
+      # This could be done with just renderPlot() but that doesn't work for fonts.
+      # See https://stackoverflow.com/questions/31859911/r-shiny-server-not-rendering-correct-ggplot-font-family
+      # So unfortunately we need all this palava
+      
+      # Read myImage's width and height. These are reactive values, so this
+      # expression will re-run whenever they change.
+      width  <- session$clientData$output_ranger_plot_width
+      height <- session$clientData$output_ranger_plot_height
+      
+      # For high-res displays, this will be greater than 1
+      pixelratio <- session$clientData$pixelratio
+      
+      # A temp file to save the output.
+      outfile <- tempfile(fileext='.png')
+      
+      # Generate the image file
+      png(outfile, width = width * pixelratio, height = height * pixelratio,
+          res = res * pixelratio)
+      print(ranger_plot())
+      dev.off()
+      
+      # Return a list containing the filename
+      list(src = outfile,
+           width = width,
+           height = height,
+           alt = "Select 'Update cohort analysis' (top left of screen) to download data and see exploratory analysis results.")
+    }, deleteFile = TRUE) # delete the temp file when finished
+    
+    
+    
     output$glmnet_vars <- DT::renderDataTable({elr_model()$coefs}, rownames = FALSE)
     output$the_sql_cohort <- renderUI({format_sql(the_sql_cohort())})
     output$explain_cohort <- renderText({explanatory_text_cohort()})

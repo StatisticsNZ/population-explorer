@@ -28,8 +28,8 @@ GO
 CREATE TABLE IDI_Sandpit.pop_exp_dev.dim_explorer_variable (
 	-- auto incrementing:
 	variable_code						INT NOT NULL IDENTITY PRIMARY KEY, 
-	short_name							NVARCHAR(25) NOT NULL UNIQUE,
-	long_name							NVARCHAR(100) NOT NULL UNIQUE,
+	short_name							NVARCHAR(25) NOT NULL,
+	long_name							NVARCHAR(100) NOT NULL,
 	quality								NVARCHAR(25),
 	origin								NVARCHAR(40),
 	var_type							NVARCHAR(20) ,
@@ -44,6 +44,7 @@ CREATE TABLE IDI_Sandpit.pop_exp_dev.dim_explorer_variable (
 	snz_uid_linked_to_spine				FLOAT,
 	variable_class						NVARCHAR(100) NOT NULL,
 	number_observations					INT,
+	observations_in_front_end			INT,
 	status								VARCHAR(20),
 	use_in_front_end					VARCHAR(10),
 	loaded_into_wide_table              VARCHAR(15),
@@ -54,6 +55,9 @@ CREATE TABLE IDI_Sandpit.pop_exp_dev.dim_explorer_variable (
 	
 CREATE NONCLUSTERED INDEX nc_var_name ON IDI_Sandpit.pop_exp_dev.dim_explorer_variable(short_name);
 CREATE NONCLUSTERED INDEX nc_var_type ON IDI_Sandpit.pop_exp_dev.dim_explorer_variable(var_type);
+ALTER TABLE IDI_Sandpit.pop_exp_dev.dim_explorer_variable ADD CONSTRAINT unq_var_sn UNIQUE(short_name)
+ALTER TABLE IDI_Sandpit.pop_exp_dev.dim_explorer_variable ADD CONSTRAINT unq_var_ln UNIQUE(long_name)
+
 
 -- Annual version of value dimension:
 CREATE TABLE IDI_Sandpit.pop_exp_dev.dim_explorer_value_year (
@@ -65,12 +69,13 @@ CREATE TABLE IDI_Sandpit.pop_exp_dev.dim_explorer_value_year (
 	full_description	NVARCHAR(200)
 	);
 	
-CREATE NONCLUSTERED INDEX nc_val_name ON IDI_Sandpit.pop_exp_dev.dim_explorer_value_year(short_name);
-CREATE NONCLUSTERED INDEX nc_var_cod ON IDI_Sandpit.pop_exp_dev.dim_explorer_value_year(fk_variable_code);
+CREATE NONCLUSTERED INDEX nc_val_name_y ON IDI_Sandpit.pop_exp_dev.dim_explorer_value_year(short_name);
+CREATE NONCLUSTERED INDEX nc_var_cod_y ON IDI_Sandpit.pop_exp_dev.dim_explorer_value_year(fk_variable_code);
 
 -- foreign key connecting the value and variable tables together
 ALTER TABLE IDI_Sandpit.pop_exp_dev.dim_explorer_value_year
-	ADD FOREIGN KEY (fk_variable_code) REFERENCES IDI_Sandpit.pop_exp_dev.dim_explorer_variable(variable_code);
+	ADD CONSTRAINT fk_value_var_yr
+	FOREIGN KEY (fk_variable_code) REFERENCES IDI_Sandpit.pop_exp_dev.dim_explorer_variable(variable_code);
 
 -- Quarterly version of value dimension 
 -- (because eg income will have a different set of bands for quarterly compared to annual):
@@ -82,13 +87,14 @@ CREATE TABLE IDI_Sandpit.pop_exp_dev.dim_explorer_value_qtr (
 	full_description	NVARCHAR(200)
 	);
 	
-CREATE NONCLUSTERED INDEX nc_val_name ON IDI_Sandpit.pop_exp_dev.dim_explorer_value_qtr(short_name);
-CREATE NONCLUSTERED INDEX nc_var_cod ON IDI_Sandpit.pop_exp_dev.dim_explorer_value_qtr(fk_variable_code);
+CREATE NONCLUSTERED INDEX nc_val_name_q ON IDI_Sandpit.pop_exp_dev.dim_explorer_value_qtr(short_name);
+CREATE NONCLUSTERED INDEX nc_var_cod_q ON IDI_Sandpit.pop_exp_dev.dim_explorer_value_qtr(fk_variable_code);
 
 -- foreign key connecting the value and variable tables together.  Quarterly and annual versions share the 
 -- same variable dimension
 ALTER TABLE IDI_Sandpit.pop_exp_dev.dim_explorer_value_qtr
-	ADD FOREIGN KEY (fk_variable_code) REFERENCES IDI_Sandpit.pop_exp_dev.dim_explorer_variable(variable_code);
+	ADD CONSTRAINT fk_value_var_qtr
+	FOREIGN KEY (fk_variable_code) REFERENCES IDI_Sandpit.pop_exp_dev.dim_explorer_variable(variable_code);
 
 
 ------------some starter variable and value dimensions-------------------
@@ -121,9 +127,9 @@ CREATE TABLE IDI_Sandpit.pop_exp_dev.fact_rollup_year (
 	fk_date_period_ending	DATE		NOT NULL,
 	fk_snz_uid				INT			NOT NULL,
 	fk_variable_code		INT			NOT NULL,
-	value					NUMERIC(13) NOT NULL,
+	value					INT			NOT NULL,
 	fk_value_code			INT			NOT NULL)
-	ON variable_code_range_ps(fk_variable_code);
+	--ON variable_code_range_ps(fk_variable_code);
 
 
 CREATE TABLE IDI_Sandpit.pop_exp_dev.fact_rollup_qtr (
@@ -132,9 +138,9 @@ CREATE TABLE IDI_Sandpit.pop_exp_dev.fact_rollup_qtr (
 	fk_date_period_ending	DATE		NOT NULL,
 	fk_snz_uid				INT			NOT NULL,
 	fk_variable_code		INT			NOT NULL,
-	value					NUMERIC(13) NOT NULL,
+	value					INT			NOT NULL,
 	fk_value_code			INT			NOT NULL)
-	ON variable_code_range_ps(fk_variable_code);
+	--ON variable_code_range_ps(fk_variable_code);
 
 
 -- We don't make any indexes for the main fact table yet because it will grow to have billions

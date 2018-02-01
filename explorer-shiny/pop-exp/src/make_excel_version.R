@@ -4,12 +4,14 @@
 #' @details This is very specific to the particular bit of HTML we have to convert
 #' @author Peter Ellis
 html_to_df <- function(ht){
+ 
+  ht <- paste(ht, collapse = "\n")
   
   # first remove any actual line breaks in the HTML which are probably there for convenience, not
   # because they want actual line breaks
   ht <- gsub("\n", " ", ht)
   ht <- gsub("<hr>", "\n", ht)
-  
+
   # we used <em> for very particular purpose of indicating variables, so we'll replace with back ticks
   ht <- gsub("<em>", "`", ht)
   ht <- gsub("</em>", "`", ht)
@@ -29,7 +31,17 @@ html_to_df <- function(ht){
   
   #ht <- str_wrap(ht, 100)
   
-   
+  # Headings will generally be on their own so replace with nothing:
+  ht <- gsub("<h2>", " ", ht)
+  ht <- gsub("</h2>", " ", ht)
+  
+  #Web address need to have the "http://" address removed and only keep the "www." address.  
+  #Also removes the text string that is displayed in the place the "http://..." address.
+  #This also puts the web address on its own line as I hope that this is enable it to be live one print out
+  ht <- gsub("<a.*//", "", ht)
+  ht <- gsub("'.*>.", ".\n", ht)
+
+  
   # # split into a vector of one element for each line, including blanks
   paras <- str_split(ht, "\n")
 
@@ -47,6 +59,9 @@ html_to_df <- function(ht){
 #' @author Peter Ellis
 make_excel_version <- function(x, sql = NULL, explain = NULL, filename = "temp.xlsx"){
   wb <- createWorkbook()
+  
+  addWorksheet(wb, sheetName = "IDI Disclaimer", gridLines = FALSE, tabColour = snz_brand["yellow"])
+  writeData(wb, "IDI Disclaimer", html_to_df(full_disclaimer), rowNames = FALSE, colNames = FALSE)
   
   addWorksheet(wb, sheetName = "Data", tabColour = snz_brand["purple"])
   writeData(wb, "Data", as.data.frame(x), rowNames = FALSE)

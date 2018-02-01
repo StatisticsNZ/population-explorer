@@ -52,7 +52,7 @@ INSERT INTO IDI_Sandpit.pop_exp_dev.dim_explorer_variable
 		'dollars',
 		(SELECT CONVERT(date, GETDATE())),
 		'Income and employment',
-		'NUMERIC(15)');
+		'INT'); -- alternative data type could be NUMERIC(15,2), if the fact table has been defined to allow them
 
 -- grab back from the table the new code for our variable and store as a temp table #var_code			 
 DECLARE @var_code INT;

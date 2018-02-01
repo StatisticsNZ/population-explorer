@@ -1,6 +1,6 @@
 
 #' This function picks up the following from the global environment:
-#' source_schema, target_schema, target_schema_int, spine_sample_ratio, idi
+#' source_database, target_schema, target_schema_int, spine_sample_ratio, idi
 sql_execute_all <- function(folder, type = "main", error_action = "stop", upto = NULL){
   # start a fresh connection to the database for this folder
   
@@ -38,7 +38,7 @@ sql_execute_all <- function(folder, type = "main", error_action = "stop", upto =
                        sub_out = sub_out,
                        fixed    = TRUE,
                        error_action = error_action,
-                       source_schema = source_schema,
+                       source_database = source_database,
                        spine_to_sample_ratio = spine_to_sample_ratio)
     
     if(class(res) == "data.frame"){

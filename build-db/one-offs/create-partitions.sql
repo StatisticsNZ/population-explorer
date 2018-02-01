@@ -43,3 +43,4 @@ CREATE PARTITION SCHEME year_range_ps
     AS PARTITION year_range_pf  
     TO (fgw01, fgw02, fgw03, fgw04, fgw05, fgw06, fgw07, fgw08) ;  
 GO  
+

@@ -149,7 +149,7 @@ CREATE CLUSTERED INDEX ci_post_count_offenders ON pol_clean.post_count_offenders
 CREATE CLUSTERED INDEX ci_post_count_victimisations ON pol_clean.post_count_victimisations(snz_uid, pol_pov_reported_date)
 CREATE CLUSTERED INDEX ci_pre_count_offenders ON pol_clean.pre_count_offenders(snz_uid, pol_pro_proceeding_date)
 CREATE CLUSTERED INDEX ci_pre_count_victimisations ON pol_clean.pre_count_victimisations(snz_uid, pol_prv_reported_date)
-CREATE CLUSTERED INDEX ci_spine_population ON security.spine_population(snz_spine_uid)
+--CREATE CLUSTERED INDEX ci_spine_population ON security.spine_population(snz_spine_uid)
 CREATE CLUSTERED INDEX ci_ird_amt_by_trn_type ON sla_clean.ird_amt_by_trn_type(snz_uid, ir_att_trn_month_date)
 CREATE CLUSTERED INDEX ci_ird_eom_tot_loan_bal ON sla_clean.ird_eom_tot_loan_bal(snz_uid, ir_bal_loan_bal_month_date)
 CREATE CLUSTERED INDEX ci_ird_income_adjustment ON sla_clean.ird_income_adjustment(snz_uid, ir_adj_return_date)

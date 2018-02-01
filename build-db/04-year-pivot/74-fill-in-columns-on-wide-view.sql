@@ -23,6 +23,8 @@ GO
 CREATE PROCEDURE pop_exp_dev.populate_columns
 AS
 BEGIN
+	SET NOCOUNT ON
+
 	IF OBJECT_ID('IDI_Sandpit.pop_exp_dev.vars_to_do') IS NOT NULL
 		DROP TABLE IDI_Sandpit.pop_exp_dev.vars_to_do
 	
@@ -35,8 +37,9 @@ BEGIN
 	
 	DECLARE @i INT = 1
 
-	DECLARE @this_var VARCHAR(50)
-	DECLARE @numeric_value VARCHAR(30)
+	DECLARE @this_var VARCHAR(100)
+	DECLARE @numeric_value VARCHAR(100)
+	DECLARE @data_type VARCHAR(100)
 	DECLARE @query1 VARCHAR(2000)
 	DECLARE @query2 VARCHAR(2000)
 
@@ -44,9 +47,8 @@ BEGIN
 	BEGIN
 		SET @this_var = (SELECT short_name FROM pop_exp_dev.vars_to_do WHERE id = @i);
 
-		print @this_var;
-
 		SET @numeric_value = (SELECT has_numeric_value FROM IDI_Sandpit.pop_exp_dev.dim_explorer_variable WHERE short_name = @this_var)
+		SET @data_type = (SELECT data_type FROM IDI_Sandpit.pop_exp_dev.dim_explorer_variable WHERE short_name = @this_var)
 
 		IF @numeric_value = 'No numeric value'
 			SET @query1 =
@@ -65,7 +67,7 @@ BEGIN
 		ELSE
 			SET @query1 =
 			'UPDATE IDI_Sandpit.pop_exp_dev.vw_year_wide
-			SET IDI_Sandpit.pop_exp_dev.vw_year_wide.' + @this_var + '= b.value,
+			SET IDI_Sandpit.pop_exp_dev.vw_year_wide.' + @this_var + '= CAST(b.value AS ' + @data_type + '),
 				IDI_Sandpit.pop_exp_dev.vw_year_wide.' + @this_var + '_code = b.fk_value_code
 			FROM  IDI_Sandpit.pop_exp_dev.vw_year_wide AS a
 			INNER JOIN IDI_Sandpit.pop_exp_dev.fact_rollup_year AS b

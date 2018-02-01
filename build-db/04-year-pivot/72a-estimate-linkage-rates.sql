@@ -26,8 +26,14 @@ IF OBJECT_ID('tempdb..#tmp') IS NOT NULL
 IF OBJECT_ID('tempdb..#bridge') IS NOT NULL
 	DROP TABLE #bridge
 
+-- old version:
 IF OBJECT_ID('IDI_Sandpit.pop_exp_dev.br_variable_tables') IS NOT NULL
 	DROP TABLE IDI_Sandpit.pop_exp_dev.br_variable_tables;
+GO
+
+-- new named version:
+IF OBJECT_ID('IDI_Sandpit.pop_exp_dev.bridge_variable_tables') IS NOT NULL
+	DROP TABLE IDI_Sandpit.pop_exp_dev.bridge_variable_tables;
 GO
 
 SELECT 
@@ -65,7 +71,7 @@ END
 SELECT
 	 fk_variable_code,
 	 table_code as fk_table_code
-INTO IDI_Sandpit.pop_exp_dev.br_variable_tables
+INTO IDI_Sandpit.pop_exp_dev.bridge_variable_tables
 FROM #bridge AS b
 LEFT JOIN
 	(SELECT
@@ -75,14 +81,14 @@ LEFT JOIN
 ON b.idi_table = t.idi_table
 WHERE b.idi_table IS NOT NULL
 
-ALTER TABLE IDI_Sandpit.pop_exp_dev.br_variable_tables
+ALTER TABLE IDI_Sandpit.pop_exp_dev.bridge_variable_tables
    ADD var_tab_code INT NOT NULL IDENTITY (1,1),
    CONSTRAINT var_tab_code PRIMARY KEY CLUSTERED (var_tab_code);
 
-ALTER TABLE IDI_Sandpit.pop_exp_dev.br_variable_tables
+ALTER TABLE IDI_Sandpit.pop_exp_dev.bridge_variable_tables
 	ADD FOREIGN KEY (fk_variable_code) REFERENCES IDI_Sandpit.pop_exp_dev.dim_explorer_variable(variable_code);
 
-ALTER TABLE IDI_Sandpit.pop_exp_dev.br_variable_tables
+ALTER TABLE IDI_Sandpit.pop_exp_dev.bridge_variable_tables
 	ADD FOREIGN KEY (fk_table_code) REFERENCES IDI_Sandpit.intermediate.dim_idi_tables(table_code);
 
 
@@ -100,7 +106,7 @@ SELECT
 	MIN(proportion_snz_uid_on_spine) AS snz_uid_linked_to_spine
 INTO #tmp
 FROM IDI_Sandpit.pop_exp_dev.dim_explorer_variable		AS a
-INNER JOIN IDI_Sandpit.pop_exp_dev.br_variable_tables	AS b
+INNER JOIN IDI_Sandpit.pop_exp_dev.bridge_variable_tables	AS b
 ON a.variable_code = b.fk_variable_code
 INNER JOIN IDI_Sandpit.intermediate.dim_idi_tables		AS c
 ON b.fk_table_code = c.table_code

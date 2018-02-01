@@ -17,6 +17,16 @@
   We have made the estimated resident population ("IDI-ERP") the default, but have included data from others.  This lets us go back further than the current estimated resident population table, and also lets people consider alternative versions (for, example filtering by a particular number of days spent in New Zealand and activity from a particular admin data source).
 </p>
 
+<h3>Why are some of the linkage rates in the 'variables' page so low? (eg about 15% for many)</h3>
+
+<p>
+	Linkage rates have been estimated by taking the <em>minimum</em> of the linkage rate for the source tables directly used in the creation of a variable.  In the case of variables like those relating to ethnicity, birth year, sex etc, they have been drawn from <code>IDI_Clean.data.personal_detail</code>.  Because that table is derived from many other tables, it has more than 60 million rows of potential people, and only around 9 million of them are joined to the spine.  Hence the low reported linkage rate.  Basically, the linkage rate isn't particularly meaningful in this situation, which is why in the explanatory text the tool produces, such variables are described as "enduring characteristics of people on the spine that are estimated with reasonable accuracy", rather than citing the actual linkage rate.
+</p>
+
+<p>
+	Linkage rates are most meaningful for data that has what we refer to as a "person-period" grain, meaning it is observations that change over time for individuals (such as ACC claims, income, and number of hospital discharges).
+</p>
+
 <h2>Tools, technology and definitions</h2>
 <h3>Where can I see the source code?</h3>
 <p>

@@ -48,8 +48,8 @@ for(var in vars){
 if(error > 0){
   stop(paste(error, "problematic variables in vw_ye_mar_wide, see above"))
 } else {
-  message("Passed test of categorical variables all having a range of values")
-  message("Passed test of continuous variables all having a range of values (ie not all zero)")  
+  print("Passed test of categorical variables all having a range of values")
+  print("Passed test of continuous variables all having a range of values (ie not all zero)")  
 }
 
 

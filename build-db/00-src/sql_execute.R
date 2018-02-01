@@ -20,7 +20,7 @@
 #' needs to have (at least) th following columns: event_time, target_schema, script_name, batch_number, result, and err_mess. 
 #' @author Peter Ellis
 sql_execute <- function(channel, filename, sub_in = NULL, sub_out = NULL, fixed = TRUE, 
-                        error_action = "stop", source_schema = "IDI_Clean", log_table = "IDI_Sandpit.dbo.pop_exp_build_log", 
+                        error_action = "stop", source_database = "IDI_Clean", log_table = "IDI_Sandpit.dbo.pop_exp_build_log", 
                         verbose = TRUE, spine_to_sample_ratio = 1, ...){
   
   # we can't tell in advance what encoding the .sql files are in, so we read it in
@@ -50,12 +50,12 @@ sql_execute <- function(channel, filename, sub_in = NULL, sub_out = NULL, fixed 
     sql <- gsub(sub_in, sub_out, sql, fixed = fixed)
   }
   
-  if(source_schema != "IDI_Clean"){
-    sql <- gsub("IDI_Clean", source_schema, sql)
+  if(source_database != "IDI_Clean"){
+    sql <- gsub("IDI_Clean", source_database, sql)
   }
   
-  if(source_schema == "IDI_Clean"){
-    sql <- gsub("IDI_Sample", source_schema, sql)
+  if(source_database == "IDI_Clean"){
+    sql <- gsub("IDI_Sample", source_database, sql)
   }
   
   sql <- gsub("SET spine_to_sample_ratio = [0-9]+",

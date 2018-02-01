@@ -8,14 +8,15 @@ Most of the documentation for this project is in comments for each relevant scri
 
 ## Overall approach
 
-The datamart is built In the `IDI_Sandpit` database on the `wtstsql35` server.  The SQL scripts that build the database all refer to the `pop_exp_dev` schema in `IDI_Sandpit`, but the datamart is rarely built in that actual schema.  Instead, there are four schemas that can hold copies of the datamart:
+The datamart is built In the `IDI_Sandpit` database on the `wtstsql35` server.  The SQL scripts that build the database all refer to the `pop_exp_dev` schema in `IDI_Sandpit`, but the datamart is rarely built in that actual schema.  Instead, there are five schemas that can hold variants of the datamart:
 
 - `pop_exp_alpha`
 - `pop_exp_bravo`
 - `pop_exp_charlie`
 - `pop_exp_sample`
+- `pop_exp_synth`
 
-At any one moment, there may be four complete versions of the database, based on different sampled subsets of the IDI.  The hope is that performance can be acceptable with a version that has a `spine_to_sampling_ratio` of 1.  `pop_exp_sample` always has a ratio of 100.  When it comes time to promote the datamart to production, whichever version of the datamart is best is copied over to `[wprdsql36\ileed].IDI_RnD.pop_exp` which is the version for the data lab (ie the names `pop_exp_alpha`, `pop_exp_bravo` etc are only for use in the development and test environment).
+At any one moment, there may be four complete versions of the original database, based on different sampled subsets of the IDI, plus a synthetic version.  Performance on the production server is acceptable with a version that has a `spine_to_sampling_ratio` of 1.  `pop_exp_sample` always has a ratio of 100.  When it comes time to promote the datamart to production, whichever version of the datamart is best is copied over to `[wprdsql36\ileed].IDI_Pop_explorer.pop_exp` which is the version for the data lab (ie the names `pop_exp_alpha`, `pop_exp_bravo` etc are only for use in the development and test environment).
 
 There are three other relevant schemas in the database:
 

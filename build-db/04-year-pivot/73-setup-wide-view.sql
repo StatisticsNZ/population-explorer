@@ -15,7 +15,7 @@ I know it seems a bit awkward with both year and date_period_ending in there, bu
 joining with the fact table; and year is useful for end users
 
 Perhaps 20% of the cost in time of making this big wide table is in this script 73, which creates the actual table and makes it the right size,
-but with all the person-period columns as NULL except for days_nz and days_nz_code, which are our baseline "we know they have values"
+but with all the person-period columns as NULL
 
 
 */
@@ -45,10 +45,7 @@ CREATE TABLE pop_exp_dev.vw_year_wide
 	seed FLOAT,
 	
 	number_observations INT)
--- we have a file set aside for this on disk but since I did that performance has been dreadful, so i'm commenting this out for now:
--- ON fg11_wide;
 GO
-
 
 ----------------------------add columns for variables with person-period grain--------------------
 IF OBJECT_ID('pop_exp_dev.add_var_columns') IS NOT NULL
@@ -57,6 +54,7 @@ GO
 
 CREATE PROCEDURE pop_exp_dev.add_var_columns AS
 BEGIN
+	SET NOCOUNT ON
 	DECLARE @var_names TABLE(
 		short_name			VARCHAR(30),
 		data_type			VARCHAR(30),
@@ -100,7 +98,7 @@ GO
 
 INSERT pop_exp_dev.vw_year_wide(snz_uid, date_period_ending, year_nbr, sex_code, born_nz_code, birth_year_nbr, iwi_code,
 		europ_code, maori_code, pacif_code, asian_code, melaa_code, other_code, number_known_parents, parents_income_birth_year,
-		days_nz, days_nz_code, seed)
+		seed)
 SELECT 
 	b.snz_uid, 
 	fk_date_period_ending, 
@@ -112,27 +110,22 @@ SELECT
 	europ_code, maori_code, pacif_code, asian_code, melaa_code, other_code,
 	number_known_parents,
 	parents_income_birth_year,
-		
-	a.value			AS age,
-	a.fk_value_code AS age_code,
-
 	seed
 
 FROM 
-	IDI_Sandpit.pop_exp_dev.fact_rollup_year             AS a
--- next left join is important because we want the redundant person-grained variables to be repeated for each person-year combination:
-LEFT JOIN IDI_Sandpit.pop_exp_dev.link_person_extended   AS b
+	(SELECT DISTINCT fk_snz_uid, fk_date_period_ending 
+	 FROM IDI_Sandpit.pop_exp_dev.fact_rollup_year
+	 WHERE   fk_date_period_ending > CAST('19891231' AS DATE) )   AS a
+-- next left join is because we want the redundant person-grained variables to be repeated for each person-year combination:
+LEFT JOIN IDI_Sandpit.pop_exp_dev.link_person_extended			AS b
 	ON a.fk_snz_uid = b.snz_uid
-INNER JOIN IDI_Sandpit.pop_exp_dev.dim_explorer_variable AS c
-	ON a.fk_variable_code = c.variable_code
 
-WHERE   a.fk_date_period_ending > CAST('19891231' AS DATE) AND
-		c.short_name = 'Days_NZ' AND a.value > 0;
 
--- if all the above went well, we can record that these variables were loaded:
+
+-- iff all the above went well, we can record that these variables were loaded:
 UPDATE IDI_Sandpit.pop_exp_dev.dim_explorer_variable
 SET loaded_into_wide_table = 'Loaded'
-WHERE short_name in ('Days_NZ', 'Sex', 'Born_NZ', 'birth_year_nbr', 'iwi', 
+WHERE short_name in ('Sex', 'Born_NZ', 'birth_year_nbr', 'iwi', 
 		'Europ', N'Māori', 'Pacif', 'Asian', 'Melaa', 'Other', 
 		'number_known_parents', 'parents_income_birth_year');
 

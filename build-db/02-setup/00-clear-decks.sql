@@ -28,10 +28,6 @@ IF object_id('idi_sandpit.pop_exp_dev.vw_ye_mar') is not null
 	DROP VIEW pop_exp_dev.vw_ye_mar;
 
 
-IF OBJECT_ID('IDI_Sandpit.pop_exp_dev.vw_ye_mar_wide') IS NOT NULL
-	DROP TABLE IDI_Sandpit.pop_exp_dev.vw_ye_mar_wide;
-GO
-
 IF OBJECT_ID('IDI_Sandpit.pop_exp_dev.vw_year_wide') IS NOT NULL
 	DROP TABLE IDI_Sandpit.pop_exp_dev.vw_year_wide;
 GO
@@ -39,6 +35,10 @@ GO
 
 IF OBJECT_ID('IDI_Sandpit.pop_exp_dev.br_variable_tables') IS NOT NULL
 	DROP TABLE IDI_Sandpit.pop_exp_dev.br_variable_tables;
+
+IF OBJECT_ID('IDI_Sandpit.pop_exp_dev.bridge_variable_tables') IS NOT NULL
+	DROP TABLE IDI_Sandpit.pop_exp_dev.bridge_variable_tables;
+
 
 
 IF OBJECT_ID('IDI_Sandpit.pop_exp_dev.link_person_extended') IS NOT NULL

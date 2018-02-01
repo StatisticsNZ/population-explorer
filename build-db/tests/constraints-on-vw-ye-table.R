@@ -15,4 +15,4 @@ if(nrow(tmp) != d){
   stop("vw_year_wide doesn't the correct number of foreign keys constraining it.")
 }
 
-message("Passed check on foreign keys on main reporting table")
+print("Passed check on foreign keys on main reporting table")

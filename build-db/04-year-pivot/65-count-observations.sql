@@ -31,4 +31,12 @@ SET number_observations = a.observations
 	INNER JOIN IDI_Sandpit.pop_exp_dev.dim_explorer_variable  AS b
 	ON a.variable_code = b.variable_code;
 
-	
+DROP TABLE #tmp	
+
+-- correct the spine_to_sample_ratio
+-- Important this happens here so it can work for the synthetic version too
+DECLARE @n INT = (SELECT COUNT(1) FROM IDI_Clean.data.personal_detail WHERE snz_spine_ind = 1)
+
+UPDATE pop_exp_dev.dim_explorer_variable
+SET spine_to_sample_ratio = (SELECT @n /COUNT(1) FROM pop_exp_dev.dim_person)
+WHERE short_name = 'Generic'

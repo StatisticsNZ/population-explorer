@@ -52,7 +52,7 @@ INSERT INTO IDI_Sandpit.pop_exp_dev.dim_explorer_variable
 		(SELECT MIN(DATEFROMPARTS(ir_fin_return_year_nbr, 1, 1)) FROM IDI_Clean.sla_clean.ird_loan_financial),
 		(SELECT CONVERT(date, GETDATE())),
 		'Education and training',
-		'NUMERIC(15)')
+		'INT')
 
 -- grab back from the table the new code for our variable and store as a temp table #var_code			 
 DECLARE @var_code INT

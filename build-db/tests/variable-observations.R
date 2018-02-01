@@ -15,4 +15,4 @@ if(min(res$observations) < 1000){
   stop("At least one person-period variable had implausibly few observations")
 }
 
-message("Passed test on all variables having a decent number of observations")
+print("Passed test on all variables having a decent number of observations")

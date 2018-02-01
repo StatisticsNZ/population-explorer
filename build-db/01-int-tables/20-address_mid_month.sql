@@ -19,9 +19,9 @@ So expecting 2+ hours
 
 -- clear the decks:
 IF OBJECT_ID('TempDB..#selected_days') IS NOT NULL
-DROP TABLE #selected_days;
+	DROP TABLE #selected_days;
 IF OBJECT_ID('IDI_Sandpit.intermediate.address_mid_month', 'U') IS NOT NULL
-DROP TABLE IDI_Sandpit.intermediate.address_mid_month;
+	DROP TABLE IDI_Sandpit.intermediate.address_mid_month;
 GO
 
 -- First, we want the dates of 12 days per year which we will sample where people are living at those times
@@ -87,6 +87,6 @@ GO
 -- This is here as an integrity check.  It shouldn't be possible for this table to have any meshblock
 -- codes that don't also exist in dim_meshblock, which was made from the same source table.
 ALTER TABLE IDI_Sandpit.intermediate.address_mid_month
-	ADD CONSTRAINT address_fk1 
+	ADD CONSTRAINT intermediate_address_fk1 
 	FOREIGN KEY (ant_meshblock_code) REFERENCES IDI_Sandpit.intermediate.dim_meshblock(ant_meshblock_code);
 

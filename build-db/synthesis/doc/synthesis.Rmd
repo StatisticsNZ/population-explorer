@@ -1,0 +1,201 @@
+---
+title: "Prototype synthetic unit record database for the IDI Population Explorer"
+author: "Peter Ellis - Principal Data Scientist, Stats NZ"
+date: "14 December 2017"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    number_sections: true
+    self_contained: yes
+    css: styles.css
+    highlight: pygments
+
+---
+
+<img src="snz-logo.png" style="position:absolute;top:30px;right:1px;" />
+
+```{r setup, include=FALSE, cache = FALSE}
+knitr::opts_chunk$set(echo = FALSE, warnings = FALSE, messages = FALSE, cache = TRUE)
+
+```
+
+| Version |   Date   | Comment |
+|---------|----------|---------------------|
+| 0.1     |13/12/2017 |First version |
+
+
+# Purpose
+
+The Population Explorer consists of:
+
+- a datamart
+- a graphic user interface front end
+- a synthetic version of the datamart
+
+From September to December 2017 prototype versions of all these have been developed.
+
+This document explains the prototype modelling and build process for the synthetic version.  It is assumed that Stats NZ will want to refine this and develop much more thorough tests than have been possible in the time frame; what we have at this point could be described a proof of concept.
+
+The reader should be familiar at least with the "user perspective" documentation on the Population Explorer datamart; familiarity with the "builder perspective" documentation would be very helpful.
+
+# Overall strategy
+
+## Overview
+The approach taken is to start with a very small number of genuine, non-sensitive variables (sex, is birth in the DIA database, birth year and birth month), and then create simulated versions of additional variables.  Each simulated variable will be based on a model of a subset of variables that have been established to date.  For example:
+
+- The first simulated variable, `europ`, is simulated from a model with just four explanatory variables: `sex`, `born_nz`, `birth_year_nbr`, `birth_month_nbr`.  The model is fit on the original data, and simulated based on original data for those four variables.
+- The second simulated variable, `maori` is simulated based on those four, plus `europ`.  The model is fit on the original data, then simulated on the basis of the accumulated synthetic dataset which now has four real variables plus one simulated one (`europ`) to use as the basis for the simulation.
+- and so on.
+
+Each variable-year combination is treated as a single variable.  Variables that change over time (eg Income) are modelled from the earliest year (1980) first, and subsequent years can include previous years' values as lagged explanatory variables.
+
+Due to computational limitations, not all variables can include all previously modelled variables as explanatory variables.  So the key configuration choice is 
+
+- which order to model the variables in, 
+- which previously modelled variables to include (and at what lags) as explanatory variables in model for each variable, as options increase
+- what sort of model to use for which variable
+
+This approach is based on that used by the US Census bureau for their [synthetic Longitudinal Business Database](https://www.census.gov/ces/dataproducts/synlbd/methodology.html).  However, the US approach applies it to only about 7 variables, whereas we need to do it for many more.
+
+## Step by step
+
+1. Preparation
+    - Import a random sample, less than the full population size but as large as practical computing allows, from the `fact_rollup_year` and `dim_person` tables of the original data.  For example, pick 100,000 random values of `snz_uid`, import those 100,000 rows from `dim_person`, and all values of `fact_rollup_year` where `fk_snz_uid` is in the sample (which will be about 10 million rows, as on average people have about 100 observations each in that table at the time of writing)
+    - Pivot the `fact_rollup_year` data into two separate, very wide data frames, with each column representing a variable-year combination (eg `income_2005`).  One of these will have numeric values, and the other has the codes that represent categorical values when matched to `dim_explorer_value
+    - Bind together columnwise the `dim_person` with those two pivoted tables into a single very wide original dataset, which has one row per person and 1,000+ columns (two for each variable-year combination that they might have an observation against)
+    - Create the skeleton of a synthetic version
+2. Adding columns
+    - Identify the variable response to be modelled, which might something of intrinsically person grain (eg `europ` ethnicity) of which changes over time, in which case it will be something like `benefits_2005`
+    - Identify which model to use - choices at the time of writing include simple linear (for very simple categories such as age), neural network multinomial (for categories), negative binomial (for over- or under-dispersed counts), classification tree (useful for converting a continuous variable into binned categories).
+    - Assess which variables, and at which lags (for explanatory variables that change over time), to include in the model for this particular response variable.  This can include itself with at least a lag of 1, and other time-varying variables with lags of 0 and more (including more than lag per variable)
+    - Estimate parameters for the model by fitting it to the original data
+    - Simulate new values from the model, including individual level randomness, by applying it to the synthetic data created so far
+    - move to the next variable (which might be one year further on for the same variable we just did)
+3. Reshaping and saving
+    - normalise the data back into the `dim_person` and `fact_rollup_year` shape of the original schema
+    - ensure any variables that were *not* simulated are removed from `dim_explorer_variable` and `dim_explorer_value_year`
+    - upload to the database
+    - complete indexing and pivoting just as though this were the "real" data
+
+# Implementation
+
+## Folder structure
+
+The simulation is performed in R, with some SQL used in the data preparation and upload steps.  The code is part of the overall Population Explorer SVN repository at `\\wprdsql35\Input_IDI\Population Explorer`, in the `./build-db/synthesis/` sub-folder.  The synthesis code is basically a sub-project within the `./build-db/` RStudio project.  
+
+> To run the synthesis program, open `\\wprdsql35\Input_IDI\Population Explorer\build-db\build-db.Rproj` in RStudio, and open files in the `synthesis` subfolder.
+
+The key files are:
+
+- `build-surdb.R` is an integration script, used only for running other scripts in the correct order
+-  `prep.R` does the "Preparation" stage described above.  Details are in the script.  One point to note is that missing values in birth year, birth month, and parents income at birth are imputed.  This generally makes the workflow easier but does cause some complications (for example, people with unknown birth year have no age in the main data, so imputing their birth year blurs the relationship between birth year and age, something that needs to be managed in the model for age later on)
+- `variable-relationships.xlsx` is an Excel workbook with configuration for the modelling (ie which variables to model, in what order, with what model type and explanatory variables at which lags)
+- `add-columns.R` does the "Adding columns stage described above"
+- `normalize.R` does the first step of the "Reshaping and saving" stage above, getting as far as saving text files of the four key tables `dim_person` (13MB for 100,000 individuals), `dim_explorer_variable`, `dim_explorer_value_year` and `fact_rollup_year` (about 250MB for 100,000 individuals) and a zipped up version `pop_exp_synth.zip` (about 45MB in total).
+
+## Modelling details
+
+The modelling sequence and specifications are governed by `variable-relationships.xlsx`, which is the key file to change to control the overall process.  The R program `add-columns.R` reads in that configuration Excel workbook and uses it to control the necessary modelling and simulation in correct sequence.
+
+As `add-columns.R` does the modelling and simulation for each variable, it returns summary statistics comparing the original to the synthesised distribution.
+
+### Response variables
+
+The `adding-order` worksheet in that Excel workbook has one row per response variable, in the order that they are to be modelled, with the `model_type` to use:
+
+```{r}
+datatable(adding_order)
+```
+
+Currently there are seven valid values of `model_type`:
+
+- "multinomial" - neural network multinomial regression from `nnet` R package, useful for categorical response variables and also works with ordinal or even integer response variables if there is a relatively small number of possible values (< 100 to be practical).  
+- "negative-binomial" - for over- or under-dispersed counts.  Doesn't seem to work very well, needs more exploration
+- "tree_class" - simple tree classification.  Useful for when the response variable is a categorical version of something that has already been simulated in its continuous version (eg we model age first, as a number, then model the `age_code` version as a quick and easy way of converting it into its categorical equivalent)
+- "tree_num" - regression tree
+- "sign-log-gaussian" linear regression on the logarithm of absolute value of the response.  Used for variables like income, which consist of a right skewed positive distribution mixed with a left skewed negative distribution mixed with a big bunch of zeroes.
+- "linear" - simple linear regression, only used for age (with birth year and birth month the only explanatory variables)
+- "beta-reg-366" - beta regression on a "number of days in the year" variable, for things like "days in New Zealand", "days in employment", "days in education" (with mixed success)
+
+The helper functions that do each of these models, and controls the switching between them according to the configuration in the Excel file, are in `./00-src/synthesis-helpers.R`.  Note that the `./00-src/` is at the same level as the `./synthesis/` folder.
+ 
+Note that a significant complication is the presence of most models in two forms, a continuous numeric form and a categorical one.  It might seem more intuitive to first simulate the continuous one, and then convert it to binned categories next, but in practice I found this very difficult to get plausible results; whereas `nnet::multinom()` in combination with `sample()` was pretty much spot on in replicating the original distribution of a categorical variable.  This contrast was particularly the case with tricky variables with many values of zero, or a mixture of positive and negative numbers.  So several variables go through a three step sequence (for a hypothetical `yyy` variable):
+
+- model the categorical `yyy_code` version using `nnet::multinom`.  Amongst other things, this effectively grounds the variable in the right element of the "mixture" (eg negative, none, or positive)
+- model the continuous `yyy` version conditional on the values of `yyy_code`, thereyb preserving most of its complex mixture
+- model the cateogrical `yyy_code` conditional on `yyy`, to make sure the end binned categories are consistent (eg a simulated income of \$45,000 needs to be in the \$40,000 to \$50,000 category, even step one had put that person in `$30,000 to \$40,000 and it was step 2 that gave a larger number)
+
+### Explanatory variables
+
+The `variables` worksheet in the Excel workbook indicates which variables are explanatory variables for which response variable.  Sequence does not matter in this sheet (whereas it is crucial in `adding-order`).  Note the lags column, which is interpreted as R code.  0 means "same year as the response variable we are protecting", 1 means "year before", 0:1 means "the year being predicted plus a lag". Most variables have themselves as an explanatory variable at a lag of 1 (obviously a lag of 0 is impossible).
+
+```{r}
+datatable(expl_variables)
+```
+
+Some of the modelling methods perform transformations on those explanatory variables that are continuous, using the ["modulus power transformation" proposed by John and Draper](http://www.jstor.org/stable/2986305) as a variant on Box-Cox transformations that works with negative as well as positive data.  Details are in the `./00-src/synthesis-helpers.R` R script.
+
+### Overview
+
+This diagram gives an overview of the sequence in which variables are modelled and how they then become dependencies, as explanatory variables for future variables:
+
+```{r fig.width = 11, fig.height = 9}
+library(ggraph)
+library(igraph)
+
+edges <- expl_variables %>%
+  select(-lags) %>%
+  rename(from = explanatory, to = response) %>%
+  select(from, to)
+
+nodes <- data_frame(variable = c("sex", "born_nz", "birth_year_nbr", "birth_month_nbr", adding_order$response))
+nodes <- nodes %>%
+  mutate(sequence = 1:nrow(nodes),
+         label = paste(sequence, variable))
+
+
+g <- graph_from_data_frame(edges, vertices = nodes)
+
+set.seed(42)
+ggraph(g, layout = 'kk') +
+  geom_edge_fan(colour = "grey75", arrow = arrow(length = unit(0.07, "inches"))) +
+  geom_node_text(aes(label = label, colour = sequence), fontface = "bold") +
+  theme_graph(10, base_family = "Source Sans Pro", background = "grey50") +
+  scale_color_viridis(direction = -1, option = "C") +
+  ggtitle("Sequence of modelling and synthesising variables for pop_exp_synth",
+          "The synthetic version of the IDI Population Explorer")
+```
+
+
+## Upload to the database
+
+When the simulation is finished, the data is reshaped into the Population Explorer schema and saved as text files (and a zipped up version) in the `normalize.R` script.  Output is saved in `./synthesis/upload/`.  The file `pop_exp_synth.zip` is what is proposed to be distributed further.  Note that this is the simplest version of the data (in database terms) and does not contain the wide, pivoted table.  
+
+A manual step in SQL Server Management Studio is required at this point if we want a version in our own database (eg for tests, and using the front end on), to upload data to `dbo.dim_person` and `dbo.fact_rollup_year`.  This is fully described at the end of `normalize.R`; care needs to be taken on file encoding (so macrons are accepted) and mapping data types.
+
+From this point, the file `upload-and-pivot.R` governs processes in the database, and in effect does various indexing, completing and pivoting to this version of the synthetic data just as though it were the final processing of a schema in the original "real" data.  The net result is that, structurally, the `pop_exp_synth` schema should be identical to `pop_exp_charlie` or other schemas.
+
+# Results
+
+Overall, it would be fair to say that the modelling and simulating of categorical variables works very very well, but the modelling of continuous variables has had disappointing results.  More complex models allowing mixtures of distributions may be required; but I am disappointed in the performance of the negative-binomial model (so disappointed in fact that I wonder if there is a major bug, like an extra call to `exp()`, to be addressed).
+
+# Issues and next steps
+
+In roughly this order next steps would be something like:
+
+- Check the existing synthesis helper functions work the way they are meant to and debug them if necessary
+- Create more systematic comparisons of the simulated distributions with the original - at a minimum mean, variance, quartiles, maximum and minimum values, correlations of original with simulated; possibly some two-way comparisons.  Note the `compare-distributions.R` file has a start at this, creating charts of the distributions of the two side by side for each simulated variable
+- Use the above systematic comparisons to make a better, more automated way of testing the "success" of an individual simulation run, and use this to lead further development (eg refinement of the modelling)
+- Improve the beta regression used for the "days doing XXX" (days in NZ, days in education, days in employment etc).  Currently the beta regression method doesn't give enough zeroes and is unstable (eg doesn't converge with education)
+- Think of a more systematic way to sequence the order variables are modelled, and select explanatory variables and their lags.  So far this has been done in a very ad hoc fashion, with a general principle of making variables that "feel"" like  downstream outcomes (eg mental health and income) further along in the process, with more basic demographic information (age, region, education) earlier.  But obviously the causality is two-way; we could even consider iterative modelling so more variables get modelled multiple times (this would require some changes to `add-columns.R` and the worksheet structure but not too difficult)
+- Develop new "synthesis helper" modelling functions if necessary.  For example, it might be possible to better model some of the continuous variables as mixtures.
+- Run with larger datasets (so far has only been tried with 100,000, which is a reasonable minimum, but could be good to try with 200,000 if we're prepared to live with an eventual 1GB size final dataset);
+- Re-incorporate variables I've deliberately left out during development such as "territorial authority most lived in" (I tested this and it works, but it is very slow)
+- Develop a path to publication
+- Training material on how to use it
+- Publish code that will work out of the box to create a pivoted wide version of the data, ready for use in a copy of the front end Shiny app?
+
+
+

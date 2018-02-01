@@ -12,7 +12,7 @@ idi = odbcDriverConnect("Driver=ODBC Driver 11 for SQL Server;
                         Server=WTSTSQL35.stats.govt.nz,60000")
 
 # schemas that are currently alive and this is worth trying for
-schemas <- paste0("pop_exp_", c("sample", "test", "bak", "bravo"))
+schemas <- paste0("pop_exp_", c("sample", "alpha", "bravo"))
 
 
 fns <- list.files(path = "tests/sql/", pattern = "^sample-query")

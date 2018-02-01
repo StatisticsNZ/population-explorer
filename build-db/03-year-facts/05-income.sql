@@ -63,12 +63,13 @@ INSERT INTO IDI_Sandpit.pop_exp_dev.dim_explorer_variable
 		'continuous',
 		'person-period',
 		'dollars',
-		'This is just the "income from all sources" from the IDI_Clean.data.income_tax_yr_summary table, which ultimately comes from IRD''s tax data.',
+		'This is just the "income from all sources" from the IDI_Clean.data.income_tax_yr_summary table, which ultimately comes from IRD''s tax data.  Currently shows 
+		the tax year (year ending March) for subsequent to the recorded calendar year ie the data for year ending March 2013 is recorded here against 2012.',
 		'What is the total income for the person each period?',
 		'IDI_Clean.data.income_tax_yr_summary',
 		 (SELECT CONVERT(date, GETDATE())),
 		 'Income and employment',
-		 'NUMERIC(15)');
+		 'INT'); -- alternative data type could be NUMERIC(15,2), if the fact table has been defined to allow them
 
 -- grab back from the table the new code for our variable and store as a temp table #var_code		
 DECLARE @var_code INT;	 
@@ -143,7 +144,9 @@ FROM
 			IDI_Clean.data.income_tax_yr_summary AS i
 			-- we only want people in our dimension table:
 			INNER JOIN IDI_Sandpit.pop_exp_dev.dim_person AS s
-			ON i.snz_uid = s.snz_uid) AS a
+				ON i.snz_uid = s.snz_uid
+			-- address some obvious data entry problems:
+			WHERE inc_tax_yr_sum_all_srces_tot_amt > -2000000000) AS a
 		) AS with_cats
 	-- we want to covert the categories back from categories to codes
 	LEFT JOIN #value_codes vc

@@ -4,9 +4,17 @@
 # Peter Ellis, 12 October 2017
 
 #===============global parameters=============
-schema <- "IDI_Sandpit.pop_exp_bravo"
+# choose a source schema.  Note that about 30 lines down you also need to set the server, with the odbcConnect() function.
+ 
+if(Sys.info()["nodename"] == "wprdrstudio01"){
+ # schema to use on BigTest, accessed from RStudio01:
+  schema <- "IDI_Sandpit.pop_exp_synth"             
+} else {
+  # alternatively, schema to use if accessing the production server:
+  schema <- "IDI_Pop_Explorer.pop_exp_charlie"  
+}
 
-# minimum number of counts to not be suppressed:
+# minimum number of counts to not be suppressed: 
 sup_val <- 20
 
 # ... and what to replace them with (alternatives include "Suppressed", but this means the variables are no longer numeric)
@@ -18,6 +26,12 @@ img_ht <- "500px"
 
 # Title of the application
 app_title <- "Population Explorer 0.1.0.9000"
+
+# dots per inch resolution for images.  Warning - unless you also change
+# the functions that define the plots, increasing the resolution leads to
+# text getting bigger (because there's less 'inches' to fit in the image,
+# which is the way R is thinking of it).
+res <- 80
 
 #===============setup=============================
 
@@ -49,9 +63,13 @@ library(english)
 scripts <- list.files("src", pattern = "\\.R$", full.name = TRUE)
 devnull <- lapply(scripts, source)
 
-# connection to database:
-idi <- odbcDriverConnect("Driver=ODBC Driver 11 for SQL Server;
-                                  Trusted_Connection=YES; Server=WTSTSQL35.stats.govt.nz,60000")
+if(Sys.info()["nodename"] == "wprdrstudio01"){
+  # connection to BigTest database server from RStudio01:
+  idi <- odbcDriverConnect("Driver=ODBC Driver 11 for SQL Server; Trusted_Connection=YES; Server=WTSTSQL35.stats.govt.nz,60000")
+} else {
+  # connection to production database server from the other R servers:
+ idi <- odbcConnect("ILEED")
+}
 # caution, see https://stackoverflow.com/questions/31191962/disconnect-from-postgresql-when-close-r-shiny-app
 # I think this approach *might* use a global database connection for all users.  So when we have multiple users,
 # they will all get kicked off when anyone's session ends.
@@ -142,8 +160,12 @@ legit_cat_vars_list <- tapply(legit_cat_vars$long_name, legit_cat_vars$variable_
 
 legit_cont_vars_list <- tapply(legit_cont_vars$long_name, legit_cont_vars$variable_class, 
                                function(x){sort(x)}, simplify = FALSE)
-
-
+# There's a bug in selectInput that it gives the wrong value to an element of one of these lists
+# if there's only one element in that element.  This happens for "residency, housing and transport"
+# at the moment (1 December 2017) showing up instead of "number of days in NZ".  Having another variable
+# will help but for now we just remove from the options any variable_class with only one variable in it.
+lengths <- sapply(legit_cont_vars_list, length)
+#legit_cont_vars_list[[which(lengths < 2)]] <- NULL
 
 #===================all the variables with _code in their name (ie all the discrete ones)===============
 # this next object is used in the Cohort modelling - it's the column names with _code in them, basically:

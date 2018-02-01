@@ -6,6 +6,10 @@ This is rather narrower than most date dimension tables
 
 Peter Ellis, Miriam Tankersley September-October 2017
 
+--------------------------------------------------------------------------
+
+UPDATE 11/12/17 - Fixed month_end_date and end_mth to account for 29 Feb in leap years.
+
 */
 
 use IDI_Sandpit;
@@ -89,13 +93,7 @@ BEGIN
 			DATEFROMPARTS(ye_sep_nbr,9,30)			AS ye_sep_date,		
 			DATEFROMPARTS(ye_dec_nbr,12,31)			AS ye_dec_date,
 			DATEFROMPARTS(ye_dec_nbr, month_nbr, 1) AS month_start_date,
-			DATEFROMPARTS(ye_dec_nbr, month_nbr, 
-			
-				CASE 
-					WHEN month_nbr IN (9,4,6,11) THEN 30
-					WHEN month_nbr = 2 THEN 28
-					ELSE 31
-				END) AS month_end_date,
+			EOMONTH(date_dt) AS month_end_date,
 			end_qtr,
 			end_mth,
 			CASE
@@ -142,9 +140,7 @@ BEGIN
 						THEN 'Last day of quarter'
 					ELSE 'Not last day of quarter'
 			END AS end_qtr,
-			CASE WHEN month_nbr = 2 AND day_of_month = 28 THEN 'Last day of month'
-				 WHEN month_nbr in (9, 4, 6, 11) AND day_of_month = 30 THEN 'Last day of month'
-				 WHEN month_nbr in (1, 3, 5, 7, 8, 9, 10, 12) AND day_of_month = 31 THEN 'Last day of month'
+			CASE WHEN date_dt = EOMONTH(date_dt) THEN 'Last day of month'
 				 ELSE 'Not last day of month'
 			END AS end_mth
 		FROM @tmp) AS a;

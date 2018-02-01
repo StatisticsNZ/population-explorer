@@ -141,4 +141,25 @@ END
 -- setting this primary key is a biggish job but should be much faster than getting the data in
 ALTER TABLE IDI_Sandpit.intermediate.days_in_nz ADD PRIMARY KEY (snz_uid, month_end_date);
 
+------------------Addressing those overlapping spells-------------------
+-- People with overlapping spells end up being counted twice and having 60, 90 or more days in the month in NZ.  
+-- This happens when an arrival or departure is missed.  Various ways to try and address this, but one bandaid is 
+-- to just say you can't be in the country ore than the number of days in the month.  Note that this takes a long
+-- time to execute:
+IF OBJECT_ID('tempdb..#dates') IS NOT NULL
+	DROP TABLE #dates;
+
+SELECT DISTINCT 
+	month_end_date, 
+	DAY(EOMONTH(month_end_date)) AS days_in_month
+INTO #dates
+FROM IDI_Sandpit.intermediate.days_in_nz
+
+UPDATE IDI_Sandpit.intermediate.days_in_nz
+SET days_in_nz = CASE WHEN days_in_nz <= days_in_month THEN days_in_nz ELSE days_in_month END
+FROM IDI_Sandpit.intermediate.days_in_nz as dnz
+INNER JOIN #dates as d
+ON dnz.month_end_date = d.month_end_date
+
+DROP TABLE #dates
 

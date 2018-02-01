@@ -43,12 +43,13 @@ INSERT INTO IDI_Sandpit.pop_exp_dev.dim_explorer_variable
 		'continuous',
 		'person-period',
 		'dollars',
-		'From the income source code [W&S]',
+		'From the income source code [W&S].   Currently shows 
+		the tax year (year ending March) for subsequent to the recorded calendar year ie the data for year ending March 2013 is recorded here against 2012.',
 		'How much income from wages and salaries did the person receive each time period?',
 		'IDI_Clean.data.income_tax_yr',
 		 (SELECT CONVERT(date, GETDATE())),
 		 'Income and employment',
-		 'NUMERIC(15)');
+		 'INT'); -- alternative data type could be NUMERIC(15,2), if the fact table has been defined to allow them
 
 -- grab back from the table the code for our newly added variable
 DECLARE @var_code INT;	 
@@ -109,7 +110,7 @@ FROM
 		(SELECT
 			i.snz_uid                           AS fk_snz_uid,
 			SUM(inc_tax_yr_tot_yr_amt)		    AS value,
-			inc_tax_yr_year_nbr			        AS year_nbr		
+			inc_tax_yr_year_nbr 		        AS year_nbr		
 		FROM 
 			IDI_Clean.data.income_tax_yr AS i
 			-- we only want people in our dimension table:

@@ -19,4 +19,4 @@ if(min(value_obs$observations < 2)){
   stop("Some codes in dim_explorer_value weren't used at all in the fact table.   Something probably gone wrong.")
 }
 
-message("Passed test on all values in dim_explorer_value being used in the fact table")
+print("Passed test on all values in dim_explorer_value being used in the fact table")

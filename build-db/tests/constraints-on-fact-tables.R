@@ -9,4 +9,4 @@ if(nrow(tmp) != 4){
   stop("One of fk1, fk2, fk3, fk4 foreign constraints on fact_rollup_year is not present")
 }
 
-message("Passed test on the four foreign keys needed in the main fact table being present")
+print("Passed test on the four foreign keys needed in the main fact table being present")

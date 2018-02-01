@@ -42,7 +42,7 @@ INSERT INTO IDI_Sandpit.pop_exp_dev.dim_explorer_variable
 		'person-period',
 		'Simple count of all commencing placement events, ignoring their length.  No attempt has been made at this stage to remove duplicates or any other filtering.',
 		'How much has the state intervened in placing this person in different homes?',
-		'IDI_Clean.cyf_clean.placements_event',
+		'IDI_Clean.cyf_clean.cyf_placements_event',
 		'number of events',
 		(SELECT MIN(cyf_ple_event_from_date_wid_date) FROM IDI_Clean.cyf_clean.cyf_placements_event),
 		(SELECT CONVERT(date, GETDATE())),

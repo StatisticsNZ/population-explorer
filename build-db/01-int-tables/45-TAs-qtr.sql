@@ -63,7 +63,7 @@ GO
 ALTER TABLE IDI_Sandpit.intermediate.ta_lived_in_qtr 	ADD PRIMARY KEY (snz_uid, qtr_end_date);
 GO 
 
-EXECUTE lib.add_cs_ind 'intermediate', 'ta_lived_in_qtr'
+EXECUTE IDI_Sandpit.lib.add_cs_ind 'intermediate', 'ta_lived_in_qtr'
 
   
   

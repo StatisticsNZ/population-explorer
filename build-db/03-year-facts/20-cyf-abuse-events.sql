@@ -42,7 +42,7 @@ INSERT INTO IDI_Sandpit.pop_exp_dev.dim_explorer_variable
 		'Simple count of all recorded abuse events.  No attempt has been made at this stage to remove duplicates,
 		 limit to particular types of abuse or any other filtering.',
 		 'How much has this person been abused each time period?',
-		'IDI_Clean.cyf_clean._abuse_event',
+		'IDI_Clean.cyf_clean.cyf_abuse_event',
 		'number of events',
 		(SELECT MIN(cyf_abe_event_from_date_wid_date) FROM IDI_Clean.cyf_clean.cyf_abuse_event),
 		(SELECT CONVERT(date, GETDATE())),

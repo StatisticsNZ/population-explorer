@@ -11,10 +11,9 @@ shinyUI(
              position = c("fixed-top"), windowTitle = "Population Explorer",
 tabPanel("Welcome",
          
-         # we can't use this image, it's just a placeholder
-         # original from https://www.westpac.co.nz/rednews/business/equity-crowdfunding-is-it-for-you/
-         img(src = "Westpac-Equity-Crowd-Banner.jpg", width = '100%', height = "500px", 
-             title = "We can't use this image, we swiped it from Westpac!  Please give generously in the form of another image that we do have rights to use."),
+         img(src = "population-banner.png", width = '2000px', height = "400px", 
+             title = "Image of people"),
+         
          
          # this h1() call has to be before we use column() to concentrate text in the middle of the page, as we want the h1 banner
          # to go the full width of the screen
@@ -77,12 +76,14 @@ tabPanel("Explore",
           selectInput("cont_var",
                        "Continuous variable",
                        choices = legit_cont_vars_list,
-                      selected = sample(legit_cont_vars$long_name, 1))
+                      selected = sample(legit_cont_vars$long_name, 1),
+                      selectize = FALSE)
         ),
          selectInput("cross_var_a", 
                      "Categorical variable",
                      choices = legit_cat_vars_list,
-                     selected = sample(legit_cat_vars$long_name, 1)),
+                     selected = sample(legit_cat_vars$long_name, 1),
+                     selectize = FALSE),
         conditionalPanel("input.tabs == 'Line charts' | input.tabs == 'Cross tabs'",
           uiOutput("cross_var_choice")
           ),
@@ -91,7 +92,8 @@ tabPanel("Explore",
            selectInput("cont_var_b",
                        "Second continuous variable",
                        choices = legit_cont_vars_list,
-                       selected = sample(legit_cat_vars$long_name, 1))
+                       selected = sample(legit_cat_vars$long_name, 1),
+                       selectize = FALSE)
         ),
         
          
@@ -114,7 +116,7 @@ tabPanel("Explore",
                          ),
         
         checkboxGroupInput("days_nz", "Filter by days people spent in New Zealand per year",
-                            choices = filter(values, tolower(variable_short_name) == "days_nz")$value_short_name,
+                            choices = c("No data",filter(values, tolower(variable_short_name) == "days_nz")$value_short_name),
                             selected = filter(values, tolower(variable_short_name) == "days_nz")$value_short_name),
         
         checkboxInput("resident", "Filter to just people estimated 'resident' on 30 June", value = TRUE),
@@ -122,7 +124,8 @@ tabPanel("Explore",
         selectInput("filt_var",
                      "Other filter variable",
                      choices = c("none", legit_cat_vars_list),
-                     selected = sample(legit_cat_vars$long_name, 1)),
+                     selected = sample(legit_cat_vars$long_name, 1),
+                     selectize = FALSE),
            conditionalPanel("input.filt_var != 'none'", 
              uiOutput("filter_control")
            )
@@ -132,7 +135,8 @@ tabPanel("Explore",
           selectInput("cohort_response",
                       "Response variable (continuous)",
                       choices = legit_cont_vars_list,
-                      selected = "Income all sources"),
+                      selected = "Income all sources",
+                      selectize = FALSE),
           sliderInput("cohort_birth_year", "Cohort's birth year", 1930, latest_year, value = sample(1970:1990, 1), sep = "", step = 1),
           sliderInput("cohort_year_1", "Year for explanatory data", 1990, latest_year - 1, value = sample(1991:2000, 1), sep = "", step = 1),
           sliderInput("cohort_year_2", "Year for response data", 1990, latest_year, value = 2015, sep = "", step = 1),

@@ -1,12 +1,13 @@
 /*
-Adds days spent in waged or salaried employment per dec_ye to the fact table. 
+Adds days spent in employment per dec_ye to the fact table. 
 
 Aggregates IDI_Sandpit.intermediate.days_in_employment table (days in employment per snz_uid per year-month) to days per dec_ye.
-"Employment" includes wages and salary only, and number of days per month is calculated by using starting out/new entrant/youth minimum wage and assumes an 8 hour working day.
+"Employment" includes wages and salary, self-employment, and investment income, and number of days per month is calculated by using 
+starting out/new entrant/youth minimum wage and assumes an 8 hour working day.
 
 See int-tables/29_days_in_employment (intermediate table code) for more information.
 
-Miriam Tankersley 20 November 2017 
+Miriam Tankersley 6 December 2017 
 
 */
 
@@ -40,7 +41,8 @@ INSERT INTO IDI_Sandpit.pop_exp_dev.dim_explorer_variable
 		'count',
 		'person-period',
 		'Calculates days spent in waged or salaried employment per time period. 
-		"Employment" includes wages and salary only, and number of days per month is calculated by using youth minimum wage and assumes an 8 hour working day.',
+		"Employment" includes wages and salary, self-employment, and investment income, and number of days per month is calculated by using 
+		youth minimum wage and assumes an 8 hour working day.',
 		'How long has this person spent in employment each time period?',
 		'IDI_Sandpit.intermediate.days_in_employment, IDI_Clean.data.income_cal_yr',
 		(SELECT CONVERT(date, GETDATE())),
@@ -100,7 +102,7 @@ FROM
 		 INNER JOIN IDI_Sandpit.pop_exp_dev.dim_person AS p
 		 ON e.snz_uid = p.snz_uid
 		 LEFT JOIN IDI_Sandpit.pop_exp_dev.dim_date AS d
-						-- we want to roll up by ye_march
+						-- we want to roll up by ye_dec
 		 ON e.month_end_date = d.date_dt
 		 GROUP BY e.snz_uid, d.ye_dec_date
 		) AS by_year

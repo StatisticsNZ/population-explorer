@@ -4,9 +4,7 @@ of mental health and sex
 
 Author: Iddibot, 2017-11-27 16:21:56
 
-1,1,1 seconds from pop_exp_sample
-8,3,3 seconds from pop_exp_test
-120+ from pop_exp_bak
+
 */
 
 
